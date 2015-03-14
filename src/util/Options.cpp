@@ -82,6 +82,7 @@ namespace wasp
 #define OPTIONID_time_limit ( 'z' + 101 )
 #define OPTIONID_max_cost ( 'z' + 102 )
 #define OPTIONID_exchange_clauses ( 'z' + 103 )
+#define OPTIONID_debug ( 'z' + 104 )
     
 /* WEAK CONSTRAINTS OPTIONS */
 #define OPTIONID_opt ( 'z' + 200 )
@@ -138,6 +139,8 @@ WEAK_CONSTRAINTS_ALG Options::weakConstraintsAlg = OLL;
 bool Options::disjCoresPreprocessing = false;
 bool Options::minimizeUnsatCore = false;
 bool Options::stratification = true;
+
+bool Options::debug = false;
     
 void
 Options::parse(
@@ -205,6 +208,7 @@ Options::parse(
                 { "stdin", no_argument, NULL, OPTIONID_stdin },
                 { "time-limit", required_argument, NULL, OPTIONID_time_limit },
                 { "max-cost", required_argument, NULL, OPTIONID_max_cost },
+                { "debug", no_argument, NULL, OPTIONID_debug },
                 
                 { "exchange-clauses", no_argument, NULL, OPTIONID_exchange_clauses },
                 
@@ -470,6 +474,10 @@ Options::parse(
             case OPTIONID_stratification:
                 stratification = false;
                 break;
+
+            case OPTIONID_debug:
+                debug = true;
+                break;
                 
             default:
                 ErrorMessage::errorGeneric( "This option is not supported." );
@@ -501,6 +509,7 @@ Options::setOptions(
     waspFacade.setDisjCoresPreprocessing( disjCoresPreprocessing );
     waspFacade.setMinimizeUnsatCore( minimizeUnsatCore );
     waspFacade.setStratification( stratification );
+    waspFacade.enableDebug(debug);
 }
 
 };

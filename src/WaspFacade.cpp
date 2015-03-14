@@ -60,7 +60,7 @@ WaspFacade::readInput()
 
         default:
         {
-            GringoNumericFormat gringo( solver );
+            GringoNumericFormat gringo( solver, debugInterface );
             gringo.parse();
 //            solver.setOutputBuilder( new WaspOutputBuilder() );
             greetings();
@@ -83,6 +83,12 @@ WaspFacade::solve()
         if( printDimacs )
         {
             solver.printDimacs();
+            return;
+        }
+
+        if( debugInterface != NULL )
+        {
+            debugInterface->debug();
             return;
         }
         

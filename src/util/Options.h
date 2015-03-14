@@ -78,6 +78,8 @@ namespace wasp
             static bool minimizeUnsatCore;
             
             static bool stratification;
+
+            static bool debug;
     };
 }
 

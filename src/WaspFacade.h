@@ -26,6 +26,7 @@ using namespace std;
 
 #include "util/Constants.h"
 #include "Solver.h"
+#include "DebugInterface.h"
 #include "input/Dimacs.h"
 #include "weakconstraints/WeakInterface.h"
 #include "weakconstraints/Bcd.h"
@@ -39,7 +40,7 @@ class WaspFacade
 {
     public:
         inline WaspFacade();
-        inline ~WaspFacade(){}
+        inline ~WaspFacade(){ delete debugInterface; }
         
         void readInput();
         void solve();
@@ -65,9 +66,12 @@ class WaspFacade
         
         inline unsigned int solveWithWeakConstraints();        
 
+        inline void enableDebug(bool debug);
+
     private:
         Solver solver;
-        
+        DebugInterface* debugInterface;
+
         unsigned int numberOfModels;
         unsigned int maxModels;
         bool printProgram;
@@ -78,8 +82,16 @@ class WaspFacade
         bool stratification;
 };
 
-WaspFacade::WaspFacade() : numberOfModels( 0 ), maxModels( 1 ), printProgram( false ), printDimacs( false ), weakConstraintsAlg( OPT ), disjCoresPreprocessing( false ), stratification( true )
+WaspFacade::WaspFacade() : debugInterface( NULL ), numberOfModels( 0 ), maxModels( 1 ), printProgram( false ), printDimacs( false ), weakConstraintsAlg( OPT ), disjCoresPreprocessing( false ), stratification( true )
 {   
+}
+
+void
+WaspFacade::enableDebug(
+    bool debug )
+{
+    if(debug)
+        debugInterface = new DebugInterface( solver );
 }
 
 unsigned int

@@ -1023,6 +1023,7 @@ GringoNumericFormat::readAtomsTable(
     input.read( nextAtom );
 
     char name[ 1024 ];
+    string debug("_debug");
     while( nextAtom != 0 )
     {
 //        assert_msg( nextAtom < inputVarId.size(), "nextAtom = " << nextAtom << "; size = " << inputVarId.size() );
@@ -1030,8 +1031,17 @@ GringoNumericFormat::readAtomsTable(
 
         createStructures( nextAtom );
         input.getline( name, 1024 );
-        VariableNames::setName( nextAtom, name );
+        VariableNames::setName( nextAtom, name );        
         trace_msg( parser, 6, "Set name " << name << " for atom " << nextAtom );
+        if( debugInterface != NULL )
+        {
+            string strName(name);
+            if(strName.length() > debug.length() && strName.compare(0,6,debug) == 0)
+            {
+                solver.setFrozen(nextAtom);
+                debugInterface->addAssumption(Literal(nextAtom));
+            }
+        }
         input.read( nextAtom );
     }
 

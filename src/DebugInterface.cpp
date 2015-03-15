@@ -26,7 +26,7 @@ DebugInterface::debug()
         cout << "ASSUM " << assumptions[i] << endl;
     vector< Literal > assumptionsOR;
     solver.setComputeUnsatCores(true);
-    solver.minimizeUnsatCore(true);
+    solver.setMinimizeUnsatCore(true);
     while(solver.solve( assumptions, assumptionsOR ) == INCOHERENT)
     {
         assert( solver.getUnsatCore() != NULL );

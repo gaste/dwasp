@@ -22,22 +22,28 @@
 void
 DebugInterface::debug()
 {
-    for(unsigned int i = 0; i < assumptions.size(); i++)
-        cout << "ASSUM " << assumptions[i] << endl;
+    vector< Literal > assumptionsAND;
     vector< Literal > assumptionsOR;
-    solver.setComputeUnsatCores(true);
-    solver.setMinimizeUnsatCore(true);
-    while(solver.solve( assumptions, assumptionsOR ) == INCOHERENT)
-    {
+        
+    computeAssumptionsAnd( assumptionsAND );
+    
+    solver.setComputeUnsatCores( true );
+    solver.setComputeMinimalUnsatCore( true );
+    //solver.setComputeMinimalUnsatCore( true );
+    while( solver.solve( assumptionsAND, assumptionsOR ) == INCOHERENT )
+    {        
         assert( solver.getUnsatCore() != NULL );
-        const Clause& unsatCore = *(solver.getUnsatCore());
-        for( unsigned int i = 0; i < unsatCore.size(); i++ )
-        {
-            Var v = unsatCore[ i ].getVariable();
-            cout << "_debug ----> " << v << endl;
-        }
+        const Clause& unsatCore = *( solver.getUnsatCore() );
+        cout << "INCOHERENT " << unsatCore << endl;
         //doSomething;
+        
+        //Next check
+        computeAssumptionsAnd( assumptionsAND );
+        solver.unrollToZero();
+        solver.clearConflictStatus();
+        break;
     }
 
-    assert(0);
+    assert( 0 && "Implement me!" );
+    exit( 400 );
 }

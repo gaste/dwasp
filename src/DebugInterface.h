@@ -29,14 +29,23 @@ class Solver;
 class DebugInterface
 {    
     public:
-        inline DebugInterface(Solver& s) : solver(s) {}
-        inline void addAssumption(Literal l) { assumptions.push_back(l); }
+        inline DebugInterface( Solver& s ) : solver( s ) {}
+        inline void addAssumption( Literal l ) { assumptions.push_back( l ); }
         void debug();
 
     private:
-        inline DebugInterface(const DebugInterface&);
+        inline DebugInterface( const DebugInterface& );
+        inline void computeAssumptionsAnd( vector< Literal >& assumptionsAND );
         Solver& solver;
-        vector<Literal> assumptions;
+        vector< Literal > assumptions;
 };
+
+void
+DebugInterface::computeAssumptionsAnd(
+    vector< Literal >& assumptionsAND )
+{
+    for( unsigned int i = 0; i < assumptions.size(); i++ )
+        assumptionsAND.push_back( assumptions[ i ] );        
+}
 
 #endif

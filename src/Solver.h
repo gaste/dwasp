@@ -410,9 +410,12 @@ class Solver
         
         inline void computeUnsatCore();
         inline void minimizeUnsatCore( vector< Literal >& assumptionsAND );
+        inline void computeMinimalUnsatCore( vector< Literal >& assumptionsAND );
         inline void setMinimizeUnsatCore( bool b ) { minimizeUnsatCore_ = b; }
+        inline void setComputeMinimalUnsatCore( bool b ) { computeMinimalUnsatCore_ = b; }
         inline void setComputeUnsatCores( bool b ) { computeUnsatCores_ = b; }
         inline const Clause* getUnsatCore() const { return unsatCore; }
+        inline void setOptLit( Literal lit ) { getDataStructure( lit ).setOptLit( true ); }
         
         inline OptimizationLiteralData& getOptimizationLiteral( unsigned int pos ) { assert( pos < optimizationLiterals.size() ); return *optimizationLiterals[ pos ]; }
         inline unsigned int numberOfOptimizationLiterals() const { return optimizationLiterals.size(); }
@@ -608,6 +611,7 @@ class Solver
         bool partialChecks;
         bool computeUnsatCores_;
         bool minimizeUnsatCore_;
+        bool computeMinimalUnsatCore_;
         Clause* unsatCore;
         bool weighted_;
         unsigned int maxNumberOfChoices;
@@ -659,6 +663,8 @@ Solver::Solver()
     learnedFromConflicts( 0 ),
     partialChecks( true ),
     computeUnsatCores_( false ),
+    minimizeUnsatCore_( false ),
+    computeMinimalUnsatCore_( false ),        
     unsatCore( NULL ),
     weighted_( false ),
     maxNumberOfChoices( UINT_MAX ),
@@ -713,7 +719,9 @@ Solver::solve(
             unsatCore = new Clause();
         else
         {
-            if( minimizeUnsatCore_ )
+            if( computeMinimalUnsatCore_ )
+                computeMinimalUnsatCore( assumptionsAND );
+            else if( minimizeUnsatCore_ )
                 minimizeUnsatCore( assumptionsAND );
         }
     }
@@ -2417,7 +2425,7 @@ Solver::minimizeUnsatCore(
         assumptionsAND.push_back( toAdd );
         setAssumptionAND( toAdd, true );
     }
-    numberOfAssumptions = assumptionsAND.size();
+    numberOfAssumptions = assumptionsAND.size();        
     
     unrollToZero();
     unsigned int oldSize = unsatCore->size();
@@ -2430,7 +2438,7 @@ Solver::minimizeUnsatCore(
     ( !hasPropagators() ) ? solveWithoutPropagators( assumptionsAND, tmp2 ) : solvePropagators( assumptionsAND, tmp2 );
     
     assert( result == INCOHERENT );
-    
+        
     if( unsatCore == NULL )
         unsatCore = new Clause();
     
@@ -2439,6 +2447,73 @@ Solver::minimizeUnsatCore(
         goto begin;
     
     assert( unsatCore->size() == oldSize );
+    setMaxNumberOfChoices( originalMaxNumberOfChoices );
+    setMaxNumberOfRestarts( originalMaxNumberOfRestarts );
+}
+
+void
+Solver::computeMinimalUnsatCore(
+    vector< Literal >& assumptionsAND )
+{    
+    //First polynomial case
+    minimizeUnsatCore( assumptionsAND );
+    assert( unsatCore != NULL );
+    if( unsatCore->size() <= 1 )
+        return;    
+    
+    unsigned int originalMaxNumberOfChoices = maxNumberOfChoices;
+    unsigned int originalMaxNumberOfRestarts = maxNumberOfRestarts;
+    
+    setMaxNumberOfChoices( UINT_MAX );
+    setMaxNumberOfRestarts( UINT_MAX );
+    
+    vector< Literal > tmp;    
+    vector< Literal > tmp2;
+    
+    clearAfterSolveUnderAssumptions( assumptionsAND, tmp2 );
+    clearConflictStatus();    
+    assumptionsAND.swap( tmp );
+    
+    for( unsigned int i = 0; i < unsatCore->size(); i++ )
+    {        
+        Literal lit = unsatCore->getAt( i );        
+        Literal toAdd;
+        if( getDataStructure( lit ).isOptLit() )            
+            toAdd = lit.getOppositeLiteral();
+        else if( getDataStructure( lit.getOppositeLiteral() ).isOptLit() )
+            toAdd = lit;
+        else
+            continue;
+        assumptionsAND.push_back( toAdd );
+        setAssumptionAND( toAdd, true );
+    }
+    numberOfAssumptions = assumptionsAND.size();
+    
+    assert( assumptionsAND.size() == unsatCore->size() );    
+    for( int i = assumptionsAND.size() - 1; i >= 0; i-- )
+    {
+        unrollToZero();
+        computeUnsatCores_ = false;
+        Literal currentLiteral = assumptionsAND[ i ];
+        setAssumptionAND( currentLiteral, false );
+        assumptionsAND[ i ] = assumptionsAND.back();
+        assumptionsAND.pop_back();
+        
+        unsigned int result = ( !hasPropagators() ) ? solveWithoutPropagators( assumptionsAND, tmp2 ) : solvePropagators( assumptionsAND, tmp2 );
+        assert( result == COHERENT || result == INCOHERENT );        
+        //if the program is coherent than the literal is needed in the unsat core
+        if( result == COHERENT )
+        {
+            assumptionsAND.push_back( currentLiteral );
+            setAssumptionAND( currentLiteral, true );
+        }        
+    }
+    
+    delete unsatCore;
+    unsatCore = new Clause();
+    for( unsigned int i = 0; i < assumptionsAND.size(); i++ )
+        unsatCore->addLiteral( assumptionsAND[ i ] );    
+    computeUnsatCores_ = true;
     setMaxNumberOfChoices( originalMaxNumberOfChoices );
     setMaxNumberOfRestarts( originalMaxNumberOfRestarts );
 }

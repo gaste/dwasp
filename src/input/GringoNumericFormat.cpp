@@ -1035,11 +1035,12 @@ GringoNumericFormat::readAtomsTable(
         trace_msg( parser, 6, "Set name " << name << " for atom " << nextAtom );
         if( debugInterface != NULL )
         {
-            string strName(name);
-            if(strName.length() > debug.length() && strName.compare(0,6,debug) == 0)
+            string strName( name );
+            if( strName.length() > debug.length() && strName.compare( 0, 6, debug ) == 0 )
             {
-                solver.setFrozen(nextAtom);
-                debugInterface->addAssumption(Literal(nextAtom));
+                solver.setFrozen( nextAtom );
+                debugInterface->addAssumption( Literal( nextAtom ) );
+                solver.setOptLit( Literal( nextAtom, NEGATIVE ) );
             }
         }
         input.read( nextAtom );

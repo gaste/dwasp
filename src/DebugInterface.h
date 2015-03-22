@@ -23,29 +23,27 @@
 using namespace std;
 
 #include "Literal.h"
+#include "Clause.h"
 
 class Solver;
 
+// Used for the debugging of INCOHERENT programs using debug-literals (_debug) to identify the conflicting parts
 class DebugInterface
 {    
-    public:
+	public:
         inline DebugInterface( Solver& s ) : solver( s ) {}
-        inline void addAssumption( Literal l ) { assumptions.push_back( l ); }
+        void addAssumption( Literal l ) { assumptions.push_back( l ); }
         void debug();
 
     private:
-        inline DebugInterface( const DebugInterface& );
-        inline void computeAssumptionsAnd( vector< Literal >& assumptionsAND );
+        DebugInterface( const DebugInterface& );
+        void computeAssumptionsAnd( vector< Literal >& assumptionsAND );
+
+        string literalsToString(vector< unsigned int > literalIds, bool withId);
+        vector< unsigned int > getDebugLiterals( const Clause& unsatCore );
+
         Solver& solver;
         vector< Literal > assumptions;
 };
-
-void
-DebugInterface::computeAssumptionsAnd(
-    vector< Literal >& assumptionsAND )
-{
-    for( unsigned int i = 0; i < assumptions.size(); i++ )
-        assumptionsAND.push_back( assumptions[ i ] );        
-}
 
 #endif

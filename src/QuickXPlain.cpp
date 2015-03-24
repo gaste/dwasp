@@ -61,9 +61,9 @@ vector< unsigned int > QuickXPlain::quickXPlainIntern(int level, vector< unsigne
 		assumptionsAND.push_back( Literal( toCheck[i]) );
 	}
 
-	if ( addedToCheck.empty() && solveAndClearWithAssumptions(assumptionsAND, assumptionsOR) == INCOHERENT)
+	if ( !addedToCheck.empty() && solveAndClearWithAssumptions(assumptionsAND, assumptionsOR) == INCOHERENT)
 	{
-		trace_msg( debug, level+1, "QXP lvl " << level << ": nothing to check and INCOHERENT -> prune");
+		trace_msg( debug, level+1, "QXP lvl " << level << ": nothing to check and INCOHERENT for " << vectorToString(toCheck) << " -> prune");
 		return empty;
 	}
 	else if ( toSplit.size() == 1 )

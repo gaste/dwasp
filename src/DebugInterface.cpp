@@ -21,20 +21,25 @@
 #include "Solver.h"
 #include <string>
 
-// gives a list of the AND assumptions added for debugging (added while parsing the input program)
-//		assumptionsAND ... the vector for the assumptions
+/**
+ * gives a list of the AND assumptions added for debugging (added while parsing the input program)
+ * assumptionsAND ... the vector for the assumptions
+ */
 void DebugInterface::computeAssumptionsAnd( vector< Literal >& assumptionsAND )
 {
     for( unsigned int i = 0; i < assumptions.size(); i++ )
         assumptionsAND.push_back( assumptions[ i ] );
 }
 
-// creates a string containing all literals stated in the given vector
-// form: [ literal (id) | ... | literal (id)]
-//		literalIds ... IDs of the literals
-//		withID	   ... considers also the id of the literal when the creating the string if true
-//  the string with the literals
-string DebugInterface::literalsToString(vector< unsigned int > literalIds, bool withId)
+/**
+ * creates a string containing all literals stated in the given vector
+ * form: [ literal (id) | ... | literal (id)]
+ *
+ * @param  literalIds (input) IDs of the literals
+ * @param  withID	  (input) considers also the id of the literal when the creating the string if true
+ * @return the string with the literals
+ */
+string DebugInterface::literalsToString(vector< unsigned int >& literalIds, bool withId)
 {
 	string s = "[ ";
 
@@ -60,10 +65,13 @@ string DebugInterface::literalsToString(vector< unsigned int > literalIds, bool 
 	return s += "]";
 }
 
-// gets all literals (IDs) from a clause
-// used to get the literals from the unsatisfiable core
-//		unsatCore ... the unsatisfiable core (or a other clause)
-//  return a vector of literal IDs
+/**
+ * gets all literals (IDs) from a clause
+ * used to get the literals from the unsatisfiable core
+ *
+ * @param unsatCore (input) the unsatisfiable core (or a other clause)
+ * @return a vector of literal IDs
+ */
 vector< unsigned int > DebugInterface::getDebugLiterals( const Clause& unsatCore )
 {
 	vector< unsigned int > debugLiterals;
@@ -76,9 +84,11 @@ vector< unsigned int > DebugInterface::getDebugLiterals( const Clause& unsatCore
 	return debugLiterals;
 }
 
-// the main debugging method
-// tries to solve the input program (with the input assumptions)
-// if it is INCOHERENT the unsatisfiable core is minimized by using the QuickXPlain algorithm (calculate preferred conflict)
+/**
+ * the main debugging method
+ * tries to solve the input program (with the input assumptions)
+ * if it is INCOHERENT the unsatisfiable core is minimized by using the QuickXPlain algorithm (calculate preferred conflict)
+ */
 void DebugInterface::debug()
 {
 	// result from the solver

@@ -26,23 +26,25 @@ using namespace std;
 
 class Solver;
 
-// QuickXPlain (QXP) algorithm to determine preferred conflicts
-// if INCOHERENT. For details on the algorithm see
-// Junker 2004; QuickXPlain - Preferred Explanations and Relaxations over constraint-based problems
+/**
+ * QuickXPlain (QXP) algorithm to determine preferred conflicts
+ * if INCOHERENT. For details on the algorithm see
+ * Junker 2004; QuickXPlain - Preferred Explanations and Relaxations over constraint-based problems
+ */
 class QuickXPlain
 {
 	public:
         inline QuickXPlain( Solver& s ) : solver( s ) {}
-        vector< unsigned int > quickXPlain(vector< unsigned int > debugLiterals);
+        vector< unsigned int > quickXPlain(vector< unsigned int >& debugLiterals);
 
     private:
         // QXP algorithm intern
-        vector< unsigned int > quickXPlainIntern(int level, vector< unsigned int > toCheck, vector< unsigned int > addedToCheck, vector< unsigned int > toSplit);
+        vector< unsigned int > quickXPlainIntern(int level, vector< unsigned int >& toCheck, vector< unsigned int >& addedToCheck, vector< unsigned int >& toSplit);
 
         // utility methods for vectors used in QXP
-        void vectorSplit(vector< unsigned int > toSplit, vector< unsigned int >& v1, vector< unsigned int >& v2);
-        vector< unsigned int > vectorAdd(vector< unsigned int > v1, vector< unsigned int > v2);
-        string vectorToString(vector < unsigned int > v);
+        void vectorSplit(vector< unsigned int >& toSplit, vector< unsigned int >& v1, vector< unsigned int >& v2);
+        vector< unsigned int > vectorAdd(vector< unsigned int >& v1, vector< unsigned int >& v2);
+        string vectorToString(vector < unsigned int >& v);
 
         // solve with given assumptions ans clear status afterwards
         unsigned int solveAndClearWithAssumptions(vector< Literal >& assumptionsAND, vector< Literal >& assumptionsOR);

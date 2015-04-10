@@ -27,7 +27,9 @@ using namespace std;
 
 class Solver;
 
-// Used for the debugging of INCOHERENT programs using debug-literals (_debug) to identify the conflicting parts
+/**
+  * Used for the debugging of INCOHERENT programs using debug-literals (_debug) to identify the conflicting parts
+  */
 class DebugInterface
 {    
 	public:
@@ -39,7 +41,7 @@ class DebugInterface
         DebugInterface( const DebugInterface& );
         void computeAssumptionsAnd( vector< Literal >& assumptionsAND );
 
-        string literalsToString(vector< unsigned int > literalIds, bool withId);
+        string literalsToString(vector< unsigned int >& literalIds, bool withId);
         vector< unsigned int > getDebugLiterals( const Clause& unsatCore );
 
         Solver& solver;

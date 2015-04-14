@@ -79,7 +79,7 @@ namespace wasp
             
             static bool stratification;
 
-            static bool debug;
+            static string debug;
     };
 }
 

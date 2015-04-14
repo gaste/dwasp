@@ -141,7 +141,7 @@ bool Options::disjCoresPreprocessing = false;
 bool Options::minimizeUnsatCore = false;
 bool Options::stratification = true;
 
-bool Options::debug = false;
+string Options::debug = "";
     
 void
 Options::parse(
@@ -210,7 +210,7 @@ Options::parse(
                 { "stdin", no_argument, NULL, OPTIONID_stdin },
                 { "time-limit", required_argument, NULL, OPTIONID_time_limit },
                 { "max-cost", required_argument, NULL, OPTIONID_max_cost },
-                { "debug", no_argument, NULL, OPTIONID_debug },
+                { "debug", required_argument, NULL, OPTIONID_debug },
                 
                 { "exchange-clauses", no_argument, NULL, OPTIONID_exchange_clauses },
                 
@@ -482,7 +482,7 @@ Options::parse(
                 break;
 
             case OPTIONID_debug:
-                debug = true;
+            	debug.append( optarg );
                 break;
                 
             default:

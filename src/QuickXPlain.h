@@ -33,21 +33,19 @@ class Solver;
  */
 class QuickXPlain
 {
-	public:
-        inline QuickXPlain( Solver& s ) : solver( s ) {}
-        vector< unsigned int > quickXPlain(vector< unsigned int >& debugLiterals);
+    public:
+        inline QuickXPlain( Solver& s ) : solver( s ) { }
+        vector< Literal > minimizeUnsatCore( const vector< Literal >& unsatCore );
 
     private:
-        // QXP algorithm intern
-        vector< unsigned int > quickXPlainIntern(int level, vector< unsigned int >& toCheck, vector< unsigned int >& addedToCheck, vector< unsigned int >& toSplit);
+        vector< Literal > minimizeUnsatCore( unsigned int level, const vector< Literal >& toCheck, const vector< Literal >& addedToCheck, const vector< Literal >& toSplit );
 
         // utility methods for vectors used in QXP
-        void vectorSplit(vector< unsigned int >& toSplit, vector< unsigned int >& v1, vector< unsigned int >& v2);
-        vector< unsigned int > vectorAdd(vector< unsigned int >& v1, vector< unsigned int >& v2);
-        string vectorToString(vector < unsigned int >& v);
+        void partitionVector( const vector< Literal >& toSplit, vector< Literal >& v1, vector< Literal >& v2 );
+        vector< Literal > appendToVector( const vector< Literal >& v, const vector< Literal >& toAppend );
 
-        // solve with given assumptions ans clear status afterwards
-        unsigned int solveAndClearWithAssumptions(vector< Literal >& assumptionsAND, vector< Literal >& assumptionsOR);
+        // solve with given assumptions and clear status afterwards
+        unsigned int solveAndClearWithAssumptions(vector< Literal > assumptionsAND);
 
         Solver& solver;
 };

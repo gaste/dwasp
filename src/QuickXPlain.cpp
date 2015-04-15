@@ -7,6 +7,7 @@
 
 #include "QuickXPlain.h"
 #include "Solver.h"
+#include "util/Formatter.h"
 #include <string>
 
 /**
@@ -16,18 +17,18 @@
  * @param  debugLiterals (input) vector of IDs from literals (_debug literals)
  * @return the preferred conflict (vector of literal IDs)
  */
-vector< unsigned int > QuickXPlain::quickXPlain(vector< unsigned int >& debugLiterals)
+vector< Literal >
+QuickXPlain::minimizeUnsatCore( const vector< Literal >& unsatCore )
 {
-	trace_msg (debug, 0, "Start quickXPlain");
-	vector< unsigned int > empty;
+    trace_msg( debug, 1, "Start minimizing UNSAT core with QuickXPlain ..." );
 
-	if ( debugLiterals.empty() )
-	{
-		trace_msg (debug, 0, "No conflicting literals");
-		return empty;
-	}
-	else
-		return quickXPlainIntern(0, empty, empty, debugLiterals);
+    if ( unsatCore.empty() )
+    {
+        trace_msg( debug, 1, "UNSAT core is empty" );
+        return unsatCore;
+    }
+    else
+        return minimizeUnsatCore( 1, vector< Literal >(), vector< Literal >(), unsatCore );
 }
 
 /**
@@ -39,68 +40,43 @@ vector< unsigned int > QuickXPlain::quickXPlain(vector< unsigned int >& debugLit
  * @param  toSplit      (input) not considered conlicts (see QXP Paper - Constraints)
  * @return (part of a) preferred conflict
  */
-vector< unsigned int > QuickXPlain::quickXPlainIntern(int level, vector< unsigned int >& toCheck,
-		vector< unsigned int >& addedToCheck, vector< unsigned int >& toSplit)
+vector< Literal >
+QuickXPlain::minimizeUnsatCore(
+        unsigned int level,
+        const vector< Literal >& toCheck, const vector< Literal >& addedToCheck,
+        const vector< Literal >& toSplit )
 {
-	// empty vector to return
-	vector< unsigned int > empty;
+    trace_msg( debug, level + 1, "QXP level " << level << ": toCheck = " << Formatter::formatClause( toCheck ) << "; added = " << Formatter::formatClause( addedToCheck ) << "; notChecked = " << Formatter::formatClause( toSplit ) );
 
-	// vector for both half of the splittet vector toSplit
-	vector< unsigned int > firstHalf;
-	vector< unsigned int > secondHalf;
-
-	// partial results
-	vector< unsigned int > result1;
-	vector< unsigned int > result2;
-
-	// to check for the partial results
-	vector< unsigned int > toCheckResult1;
-	vector< unsigned int > toCheckResult2;
-
-	// result
-	vector< unsigned int > result;
-
-	trace_msg( debug, level+1, "QXP lvl " << level << " with " << vectorToString(toCheck) << " to check (added " << vectorToString(addedToCheck) <<
-			") and " << vectorToString(toSplit) << " not checked");
-
-	// assembly assumption for the next check
-	vector< Literal > assumptionsAND;
-	vector< Literal > assumptionsOR;
-	for (unsigned int i = 0; i < toCheck.size(); i++)
-	{
-		assumptionsAND.push_back( Literal( toCheck[i]) );
-	}
-
-	if ( !addedToCheck.empty() && solveAndClearWithAssumptions(assumptionsAND, assumptionsOR) == INCOHERENT)
-	{
-		trace_msg( debug, level+1, "QXP lvl " << level << ": nothing to check and INCOHERENT for " << vectorToString(toCheck) << " -> prune");
-		return empty;
-	}
+    if ( !addedToCheck.empty() && solveAndClearWithAssumptions(toCheck) == INCOHERENT )
+    {
+        trace_msg( debug, level + 1, "QXP level " << level << ": nothing to check and INCOHERENT for toCheck = " << Formatter::formatClause( toCheck ) << " -> prune" );
+        return vector< Literal >();
+    }
 	else if ( toSplit.size() == 1 )
 	{
-		trace_msg( debug, level+1, "QXP lvl " << level << ": only " << toSplit.front() << " left -> add to preferred conflict");
+        trace_msg( debug, level + 1, "QXP level " << level << ": only " << Formatter::formatLiteral( toSplit.front() ) << " left -> add to minimal core");
 		return toSplit;
 	}
 	else
 	{
-		// split vector and calculate partial results
-		vectorSplit(toSplit, firstHalf, secondHalf);
+	    vector< Literal > firstHalf;
+	    vector< Literal > secondHalf;
+		partitionVector(toSplit, firstHalf, secondHalf);
 
-		trace_msg( debug, level+1, "QXP lvl " << level << ": split " << vectorToString(toSplit) << " into " << vectorToString(firstHalf) <<
-				" and " << vectorToString(secondHalf) );
+        trace_msg( debug, level + 1, "QXP level " << level << ": partition " << Formatter::formatClause( toSplit ) << " into " << Formatter::formatClause( firstHalf ) << " and " << Formatter::formatClause(secondHalf) );
 
 		// first partial result
-		toCheckResult2 = vectorAdd(toCheck, firstHalf);
-		result2 = quickXPlainIntern(level + 1, toCheckResult2, firstHalf, secondHalf);
-		trace_msg (debug, level+1, "QXP lvl " << level << ": first result is " << vectorToString(result2));
+		vector< Literal > firstResult = minimizeUnsatCore(level + 1, appendToVector(toCheck, firstHalf), firstHalf, secondHalf);
+
+		trace_msg( debug, level + 1, "QXP level " << level << ": first result is " << Formatter::formatClause( firstResult ) );
 
 		// second partial result
-		toCheckResult1 = vectorAdd(toCheck, result2);
-		result1 = quickXPlainIntern(level + 1, toCheckResult1, result2, firstHalf);
-		trace_msg (debug, level+1, "QXP lvl " << level << ": second result is " << vectorToString(result1));
+		vector< Literal > secondResult = minimizeUnsatCore(level + 1, appendToVector(toCheck, firstResult), firstResult, firstHalf);
+		trace_msg( debug, level + 1, "QXP level " << level << ": second result is " << Formatter::formatClause( secondResult ) );
 
-		result = vectorAdd(result1, result2);
-		trace_msg (debug, level+1, "QXP lvl " << level << ": add " << vectorToString(result) << " to preferred conflict");
+		vector< Literal > result = appendToVector( firstResult, secondResult );
+        trace_msg( debug, level + 1, "QXP level " << level << ": add " << Formatter::formatClause( result ) << " to minimal core" );
 		return result;
 	}
 }
@@ -113,16 +89,18 @@ vector< unsigned int > QuickXPlain::quickXPlainIntern(int level, vector< unsigne
  * @param v1      (output) first half of the vector
  * @param v2      (output) second half of the vector
  */
-void QuickXPlain::vectorSplit(vector< unsigned int >& toSplit,
-		vector< unsigned int >& v1, vector< unsigned int >& v2)
+void
+QuickXPlain::partitionVector(
+        const vector< Literal >& toSplit,
+		vector< Literal >& v1, vector< Literal >& v2)
 {
-	unsigned int splitAt = (toSplit.size() + 2 - 1) / 2;
+    unsigned int splitAt = (toSplit.size() + 2 - 1) / 2;
 
-	for (unsigned int i = 0; i < splitAt; i++)
-		v1.push_back(toSplit[i]);
+    for ( unsigned int i = 0; i < splitAt; i++ )
+        v1.push_back( toSplit[i] );
 
-	for (unsigned int i = splitAt; i < toSplit.size(); i++)
-		v2.push_back(toSplit[i]);
+    for ( unsigned int i = splitAt; i < toSplit.size(); i++ )
+        v2.push_back( toSplit[i] );
 }
 
 /**
@@ -131,56 +109,36 @@ void QuickXPlain::vectorSplit(vector< unsigned int >& toSplit,
  * @param v1 (input) the first vector
  * @param v2 (input) the second vector
  */
-vector< unsigned int > QuickXPlain::vectorAdd(vector< unsigned int >& v1, vector< unsigned int >& v2)
+vector< Literal >
+QuickXPlain::appendToVector(
+        const vector< Literal >& v1,
+        const vector< Literal >& v2 )
 {
-	vector< unsigned int > added;
-	std::vector<unsigned int>::iterator it;
+    vector< Literal > added;
 
-	for (unsigned int i = 0; i < v1.size(); i++)
-		added.push_back(v1[i]);
+    for ( unsigned int i = 0; i < v1.size(); i++ )
+        added.push_back( v1[i] );
 
-	for (unsigned int i = 0; i < v2.size(); i++)
-	{
-		it = find(v1.begin(), v1.end(), v2[i]);
+    for ( unsigned int i = 0; i < v2.size(); i++ )
+    {
+        if ( find( v1.begin(), v1.end(), v2[i] ) == v1.end() )
+            added.push_back( v2[i] );
+    }
 
-		if (it == v1.end())
-			added.push_back(v2[i]);
-	}
-
-	return added;
-}
-
-/**
- * constructs a string of the given vector (form: [ element_1 | ... | element_n ])
- *
- * @param  v (input) the vector
- * @return the vector as a string
- */
-string QuickXPlain::vectorToString(vector < unsigned int >& v)
-{
-	string s = "[";
-	if (!v.empty())
-	{
-		s += " " + std::to_string((unsigned int)v.at(0));
-
-		for (unsigned int i = 1; i < v.size(); i++)
-				s += " | " + std::to_string((unsigned int)v.at(i));
-	}
-	s += " ]";
-	return s;
+    return added;
 }
 
 /**
  * solve the program (with the given assumptions) using the solver instance from the constructor
  * unrolls and clears the conflict status afterwards
  */
-unsigned int QuickXPlain::solveAndClearWithAssumptions(vector< Literal >& assumptionsAND, vector< Literal >& assumptionsOR)
+unsigned int
+ QuickXPlain::solveAndClearWithAssumptions(
+        vector< Literal > assumptionsAND )
 {
-	unsigned int result = solver.solve(assumptionsAND, assumptionsOR);
-	solver.unrollToZero();
-	solver.clearConflictStatus();
-	return result;
+    vector< Literal > assumptionsOR;
+    unsigned int result = solver.solve( assumptionsAND, assumptionsOR );
+    solver.unrollToZero();
+    solver.clearConflictStatus();
+    return result;
 }
-
-
-

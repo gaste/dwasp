@@ -108,7 +108,7 @@ WaspFacade::enableDebug(
         if ( !inputStream->good() )
             ErrorMessage::errorDuringParsing( "Could not open the debug input file '" + debugFilename + "'" );
 
-        trace_msg( debug, 0, "Using file '" << debugFilename << "' as input for the logic program." );
+        trace_msg( debug, 1, "Using file '" << debugFilename << "' as input for the logic program." );
 
         debugInterface = new DebugInterface( solver );
     }

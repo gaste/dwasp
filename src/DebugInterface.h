@@ -24,6 +24,9 @@ using namespace std;
 
 #include "Literal.h"
 #include "Clause.h"
+#include "QuickXPlain.h"
+#include "DebugUserInterface.h"
+#include "DebugUserInterfaceCLI.h"
 
 class Solver;
 
@@ -33,18 +36,20 @@ class Solver;
 class DebugInterface
 {    
 	public:
-        inline DebugInterface( Solver& s ) : solver( s ) {}
+        inline DebugInterface( Solver& s ) : solver( s ), coreMinimizer( s ), userInterface( new DebugUserInterfaceCLI() ) {}
         void addAssumption( Literal l ) { assumptions.push_back( l ); }
         void debug();
 
     private:
         DebugInterface( const DebugInterface& );
         void computeAssumptionsAnd( vector< Literal >& assumptionsAND );
-
-        string literalsToString(vector< unsigned int >& literalIds, bool withId);
-        vector< unsigned int > getDebugLiterals( const Clause& unsatCore );
+        Var determineQueryVariable( const vector< Literal >& unsatCore );
+        vector< Literal > clauseToVector( const Clause& unsatCore );
+        unsigned int computeUnsatCore();
 
         Solver& solver;
+        QuickXPlain coreMinimizer;
+        DebugUserInterface* userInterface;
         vector< Literal > assumptions;
 };
 

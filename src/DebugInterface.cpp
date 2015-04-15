@@ -17,8 +17,11 @@
  */
 
 #include "DebugInterface.h"
+#include "DebugUserInterface.h"
+#include "DebugUserInterfaceCLI.h"
 #include "QuickXPlain.h"
 #include "Solver.h"
+#include "util/Formatter.h"
 #include <string>
 
 /**
@@ -32,53 +35,19 @@ void DebugInterface::computeAssumptionsAnd( vector< Literal >& assumptionsAND )
 }
 
 /**
- * creates a string containing all literals stated in the given vector
- * form: [ literal (id) | ... | literal (id)]
- *
- * @param  literalIds (input) IDs of the literals
- * @param  withID	  (input) considers also the id of the literal when the creating the string if true
- * @return the string with the literals
- */
-string DebugInterface::literalsToString(vector< unsigned int >& literalIds, bool withId)
-{
-	string s = "[ ";
-
-	if ( !literalIds.empty() )
-	{
-		s += VariableNames::getName(literalIds[0]);
-		if (withId)
-			s += " (ID " + std::to_string( literalIds[0] ) + ")";
-
-		s += " ";
-
-		for (unsigned int i = 1; i < literalIds.size(); i++)
-		{
-			s += "| " + VariableNames::getName(literalIds[i]);
-
-			if (withId)
-				s += " (ID " + std::to_string( literalIds[i] ) + ")";
-
-			s += " ";
-		}
-	}
-
-	return s += "]";
-}
-
-/**
  * gets all literals (IDs) from a clause
  * used to get the literals from the unsatisfiable core
  *
  * @param unsatCore (input) the unsatisfiable core (or a other clause)
  * @return a vector of literal IDs
  */
-vector< unsigned int > DebugInterface::getDebugLiterals( const Clause& unsatCore )
+vector< Literal > DebugInterface::clauseToVector( const Clause& clause )
 {
-	vector< unsigned int > debugLiterals;
+	vector< Literal > debugLiterals;
 
-	for (unsigned int i = 0; i < unsatCore.size(); i++)
+	for (unsigned int i = 0; i < clause.size(); i++)
 	{
-		debugLiterals.push_back(unsatCore.getAt(i).getId());
+		debugLiterals.push_back(clause[i]);
 	}
 
 	return debugLiterals;
@@ -91,44 +60,66 @@ vector< unsigned int > DebugInterface::getDebugLiterals( const Clause& unsatCore
  */
 void DebugInterface::debug()
 {
-	// result from the solver
-	unsigned int result;
+    Var queryVariable;
+    TruthValue queryVariableTruthValue;
+    bool continueDebugging = 1;
+    
+    trace_msg( debug, 1, "Start debugging with _debug assumptions" );
 
-	QuickXPlain qxp (solver);
+    if ( computeUnsatCore() != INCOHERENT ) {
+        ErrorMessage::errorGeneric( "Program not INCOHERENT" );
+        return;
+    }
 
-	// assumptions for the solver
+    assert( solver.getUnsatCore() != NULL );
+
+    vector< Literal > unsatCore = clauseToVector(*solver.getUnsatCore());
+
+    trace_msg( debug, 1, "INCOHERENT with UNSAT core " << Formatter::formatClause( unsatCore ) );
+    vector< Literal > minimalUnsatCore = coreMinimizer.minimizeUnsatCore(unsatCore);
+    trace_msg( debug, 1, "minimized UNSAT core: " << Formatter::formatClause( minimalUnsatCore ) );
+
+    do
+    {
+        switch (userInterface->promptCommand())
+        {
+        case SHOW_CORE:
+            userInterface->printCore( minimalUnsatCore );
+            break;
+        case ASK_QUERY:
+            queryVariable = determineQueryVariable( minimalUnsatCore );
+            queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
+            break;
+        case EXIT:
+            continueDebugging = 0;
+            break;
+        }
+    } while(continueDebugging);
+
+	delete userInterface;
+}
+
+unsigned int
+DebugInterface::computeUnsatCore()
+{
     vector< Literal > assumptionsAND;
     vector< Literal > assumptionsOR;
 
-    // temporary for the QXP
-    vector< unsigned int > debugLiterals;
-    vector< unsigned int > preferredConflict;
-    
-    trace_msg( debug, 0, "Start debugging with _debug assumptions" );
-
     computeAssumptionsAnd( assumptionsAND );
+
     solver.setComputeUnsatCores( true );
     solver.setComputeMinimalUnsatCore( true );
 
-    result = solver.solve(assumptionsAND, assumptionsOR);
-	solver.unrollToZero();
-	solver.clearConflictStatus();
+    unsigned int result = solver.solve( assumptionsAND, assumptionsOR );
 
-	if (result == INCOHERENT)
-	{
-		assert( solver.getUnsatCore() != NULL );
-		const Clause& unsatCore = *( solver.getUnsatCore() );
+    solver.unrollToZero();
+    solver.clearConflictStatus();
 
-		debugLiterals = getDebugLiterals(unsatCore);
+    return result;
+}
 
-		trace_msg( debug, 0, "INCOHERENT with core " << literalsToString( debugLiterals, true ) );
-
-		preferredConflict = qxp.quickXPlain(debugLiterals);
-
-		trace_msg( debug, 0, "preferred conflict found: " << literalsToString( preferredConflict, true ) );
-	}
-	else
-	{
-		trace_msg( debug, 0, "not INCOHERENT" );
-	}
+Var
+DebugInterface::determineQueryVariable( const vector< Literal >& unsatCore )
+{
+    return 0;
 }

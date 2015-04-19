@@ -18,17 +18,23 @@
  * @return the preferred conflict (vector of literal IDs)
  */
 vector< Literal >
-QuickXPlain::minimizeUnsatCore( const vector< Literal >& unsatCore )
+QuickXPlain::minimizeUnsatCore(
+    const vector< Literal >& unsatCore,
+    unsigned int level )
 {
-    trace_msg( debug, 1, "Start minimizing UNSAT core with QuickXPlain ..." );
+    trace_msg( debug, level, "Start minimizing the UNSAT core with QuickXPlain " );
 
     if ( unsatCore.empty() )
     {
-        trace_msg( debug, 1, "UNSAT core is empty" );
+        trace_msg( debug, level, "UNSAT core is empty" );
         return unsatCore;
     }
     else
-        return minimizeUnsatCore( 1, vector< Literal >(), vector< Literal >(), unsatCore );
+    {
+        vector< Literal > minimalCore = minimizeUnsatCore( level, vector< Literal >(), vector< Literal >(), unsatCore );
+        trace_msg(debug, level, "Minimized core = " + Formatter::formatClause( minimalCore ));
+        return minimalCore;
+    }
 }
 
 /**

@@ -35,7 +35,7 @@ class QuickXPlain
 {
     public:
         inline QuickXPlain( Solver& s ) : solver( s ) { }
-        vector< Literal > minimizeUnsatCore( const vector< Literal >& unsatCore );
+        vector< Literal > minimizeUnsatCore( const vector< Literal >& unsatCore, unsigned int level = 1 );
 
     private:
         vector< Literal > minimizeUnsatCore( unsigned int level, const vector< Literal >& toCheck, const vector< Literal >& addedToCheck, const vector< Literal >& toSplit );

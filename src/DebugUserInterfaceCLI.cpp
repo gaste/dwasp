@@ -77,12 +77,12 @@ DebugUserInterfaceCLI::askTruthValue( Var variable )
 
 	do
 	{
-		cout << "Should the variable '" << VariableNames::getName( variable )
-			 << "' be true (t) or false (f) in the model?";
+		cout << "Should '" << VariableNames::getName( variable )
+			 << "' be in the model? (y/n)";
 
 		promptInput(userInput);
 
-		if ( userInput == "t" ) return TRUE;
-		else if ( userInput == "f" ) return FALSE;
+		if ( userInput == "y" ) return TRUE;
+		else if ( userInput == "n" ) return FALSE;
 	} while(true);
 }

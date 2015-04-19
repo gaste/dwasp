@@ -26,16 +26,6 @@
 #include <string>
 
 /**
- * gives a list of the AND assumptions added for debugging (added while parsing the input program)
- * assumptionsAND ... the vector for the assumptions
- */
-void DebugInterface::computeAssumptionsAnd( vector< Literal >& assumptionsAND )
-{
-    for( unsigned int i = 0; i < assumptions.size(); i++ )
-        assumptionsAND.push_back( assumptions[ i ] );
-}
-
-/**
  * gets all literals (IDs) from a clause
  * used to get the literals from the unsatisfiable core
  *
@@ -63,22 +53,17 @@ void DebugInterface::debug()
 {
     Var queryVariable;
     TruthValue queryVariableTruthValue;
-    bool continueDebugging = 1;
+    bool continueDebugging = true;
     
     trace_msg( debug, 1, "Start debugging with _debug assumptions" );
 
-    if ( computeUnsatCore() != INCOHERENT ) {
+    if ( computeUnsatCore( assumptions ) != INCOHERENT ) {
         ErrorMessage::errorGeneric( "Program not INCOHERENT" );
         return;
     }
 
     assert( solver.getUnsatCore() != NULL );
-
-    vector< Literal > unsatCore = clauseToVector(*solver.getUnsatCore());
-
-    trace_msg( debug, 1, "INCOHERENT with UNSAT core " << Formatter::formatClause( unsatCore ) );
-    vector< Literal > minimalUnsatCore = coreMinimizer.minimizeUnsatCore(unsatCore);
-    trace_msg( debug, 1, "minimized UNSAT core: " << Formatter::formatClause( minimalUnsatCore ) );
+    vector< Literal > minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
 
     do
     {
@@ -90,9 +75,23 @@ void DebugInterface::debug()
         case ASK_QUERY:
             queryVariable = determineQueryVariable( minimalUnsatCore );
             queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
+
+            // TODO set the variable in the solver
+
+            if ( computeUnsatCore( assumptions ) == INCOHERENT )
+            {
+                assert( solver.getUnsatCore() != NULL );
+                minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
+            }
+            else
+            {
+                cout << "Found answer set";
+                solver.printAnswerSet();
+                continueDebugging = false;
+            }
             break;
         case EXIT:
-            continueDebugging = 0;
+            continueDebugging = false;
             break;
         }
     } while(continueDebugging);
@@ -153,12 +152,11 @@ DebugInterface::readDebugMapping( Istream& stream )
 }
 
 unsigned int
-DebugInterface::computeUnsatCore()
+DebugInterface::computeUnsatCore(
+    const vector< Literal >& assumptions )
 {
-    vector< Literal > assumptionsAND;
+    vector< Literal > assumptionsAND( assumptions );
     vector< Literal > assumptionsOR;
-
-    computeAssumptionsAnd( assumptionsAND );
 
     solver.setComputeUnsatCores( true );
     solver.setComputeMinimalUnsatCore( true );
@@ -174,5 +172,83 @@ DebugInterface::computeUnsatCore()
 Var
 DebugInterface::determineQueryVariable( const vector< Literal >& unsatCore )
 {
-    return 0;
+    Var queryVariable = unsatCore[ 0 ].getVariable();
+    map< Var, unsigned int > variableInModel;
+    float bestValue = 1;
+
+    unsigned int numModels = determineQueryVariable( unsatCore, variableInModel, assumptions, 1 );
+
+    for ( pair< Var, unsigned int > variableOccurancePair : variableInModel )
+    {
+        float val = (variableOccurancePair.second == 0) ? 0.5 : (0.5 - variableOccurancePair.second / (float)numModels);
+        val = val < 0 ? -val : val;
+
+        if ( val < bestValue )
+        {
+            queryVariable = variableOccurancePair.first;
+            bestValue = val;
+        }
+    }
+
+    return queryVariable;
+}
+
+unsigned int
+DebugInterface::determineQueryVariable(
+    const vector< Literal >& unsatCore,
+    map< Var, unsigned int >& countTrueInModels,
+    const vector< Literal >& parentAssumptions,
+    unsigned int level )
+{
+    unsigned int numModels = 0;
+
+    for ( Literal relaxLiteral : unsatCore )
+    {
+        trace_msg( debug, level, "Relaxing " + Formatter::formatLiteral( relaxLiteral ) );
+        vector< Literal > relaxedAssumptions;
+        for ( size_t i = 0; i < parentAssumptions.size(); i ++ )
+        {
+            if ( parentAssumptions[ i ].getId() != relaxLiteral.getId() )
+            {
+                relaxedAssumptions.push_back( parentAssumptions[ i ] );
+            }
+        }
+
+        vector< Literal > assumptionsAnd ( relaxedAssumptions );
+        vector< Literal > assumptionsOr;
+
+        unsigned int result = solver.solve( assumptionsAnd, assumptionsOr );
+
+        solver.unrollToZero();
+        solver.clearConflictStatus();
+
+        if ( result == COHERENT )
+        {
+            numModels ++;
+            trace_msg( debug, level, "Model found after relaxing "  + Formatter::formatLiteral( relaxLiteral ) );
+            size_t numAssignedVariables = solver.numberOfAssignedLiterals();
+
+            for ( size_t i = 0; i < numAssignedVariables; i ++ )
+            {
+                Var variable = solver.getAssignedVariable( i );
+                TruthValue value = solver.getTruthValue( variable );
+
+                if ( countTrueInModels.count( variable ) == 0 )
+                {
+                    countTrueInModels[ variable ] = (value == TRUE ? 1 : 0);
+                }
+                else
+                {
+                    countTrueInModels[ variable ] = countTrueInModels[ variable ] + (value == TRUE ? 1 : 0);
+                }
+            }
+        }
+        else
+        {
+            vector< Literal > relaxedUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ), level + 1 );
+            numModels += determineQueryVariable( relaxedUnsatCore, countTrueInModels, relaxedAssumptions, level + 1 );
+        }
+    }
+
+    return numModels;
 }

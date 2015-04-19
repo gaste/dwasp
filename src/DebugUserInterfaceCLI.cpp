@@ -17,6 +17,7 @@
  */
 
 #include "DebugUserInterfaceCLI.h"
+#include "util/RuleNames.h"
 #include "util/VariableNames.h"
 #include "util/Formatter.h"
 #include <iostream>
@@ -58,7 +59,15 @@ DebugUserInterfaceCLI::promptCommand()
 void
 DebugUserInterfaceCLI::printCore( vector< Literal >& literals )
 {
-    cout << "UNSAT core = " + Formatter::formatClause( literals ) << endl;
+    if ( !literals.empty() )
+    {
+        for ( unsigned int i = 0; i < literals.size(); i++ )
+        {
+            cout << RuleNames::getRule( VariableNames::getName( literals[i].getVariable() ) ) << endl
+                 << "    substitution = "
+                 << RuleNames::getSubstitution( VariableNames::getName( literals[i].getVariable() ) ) << endl ;
+        }
+    }
 }
 
 TruthValue

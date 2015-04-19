@@ -20,6 +20,7 @@
 #define DEBUGINTERFACE_H
 
 #include <vector>
+#include <map>
 using namespace std;
 
 #include "Literal.h"
@@ -27,6 +28,10 @@ using namespace std;
 #include "QuickXPlain.h"
 #include "DebugUserInterface.h"
 #include "DebugUserInterfaceCLI.h"
+#include "util/Istream.h"
+
+#define DEBUG_MAP_ENTRY 10
+#define DEBUG_MAP_LINE_SEPARATOR 0
 
 class Solver;
 
@@ -39,6 +44,7 @@ class DebugInterface
         inline DebugInterface( Solver& s ) : solver( s ), coreMinimizer( s ), userInterface( new DebugUserInterfaceCLI() ) {}
         void addAssumption( Literal l ) { assumptions.push_back( l ); }
         void debug();
+        void readDebugMapping( Istream& stream );
 
     private:
         DebugInterface( const DebugInterface& );

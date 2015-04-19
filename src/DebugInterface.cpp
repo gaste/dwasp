@@ -22,6 +22,7 @@
 #include "QuickXPlain.h"
 #include "Solver.h"
 #include "util/Formatter.h"
+#include "util/RuleNames.h"
 #include <string>
 
 /**
@@ -97,6 +98,58 @@ void DebugInterface::debug()
     } while(continueDebugging);
 
 	delete userInterface;
+}
+
+void
+DebugInterface::readDebugMapping( Istream& stream )
+{
+    bool doneParsing = 0;
+    trace_msg( debug, 1, "Parsing debug mapping table" );
+
+    do
+    {
+        unsigned int type;
+        stream.read( type );
+
+        if ( type == DEBUG_MAP_LINE_SEPARATOR )
+        {
+            doneParsing = 1;
+        }
+        else if ( type == DEBUG_MAP_ENTRY )
+        {
+            // format: DEBUG_MAP_ENTRY debugConstant #variables variables rule
+            string debugConstant, rule, word;
+            size_t numVars = 0;
+            vector< string > variables;
+
+            stream.read( debugConstant );
+            stream.read( numVars );
+
+            for ( size_t i = 0; i < numVars; i++ )
+            {
+                string var;
+                stream.read( var );
+                variables.push_back( var );
+            }
+
+            // read the ungrounded rule
+            do
+            {
+                stream.read( word );
+                rule += word;
+
+                if ( word[ word.length() - 1 ] != '.' )
+                    rule += " ";
+            } while ( word[ word.length() - 1 ] != '.' );
+
+            trace_msg( debug, 2, "Adding { " + debugConstant + " -> " + rule + " } to the rule map" );
+            RuleNames::addRule( debugConstant, rule, variables );
+        }
+        else
+        {
+            ErrorMessage::errorDuringParsing( "Unsupported debug map type" );
+        }
+    } while ( !doneParsing );
 }
 
 unsigned int

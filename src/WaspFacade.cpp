@@ -62,8 +62,14 @@ WaspFacade::readInput()
 
         default:
         {
+            Istream in ( *inputStream );
             GringoNumericFormat gringo( solver, debugInterface );
-            gringo.parse( *(new Istream( *inputStream )) );
+            gringo.parse( in );
+
+            if( debugInterface != NULL ) {
+                debugInterface->readDebugMapping( in );
+            }
+
 //            solver.setOutputBuilder( new WaspOutputBuilder() );
             greetings();
             break;

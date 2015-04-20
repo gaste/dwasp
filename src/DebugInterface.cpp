@@ -51,9 +51,9 @@ void DebugInterface::debug()
         return;
     }
 
-    assert( solver.getUnsatCore() != NULL );
+    assert( solver.getUnsatCore() != NULL );    
     vector< Literal > minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
-
+    
     do
     {
         switch (userInterface->promptCommand())
@@ -66,14 +66,14 @@ void DebugInterface::debug()
             break;
         case ASK_QUERY:
         {
-            queryVariable = determineQueryVariable( minimalUnsatCore );
-            queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
-
+            queryVariable = determineQueryVariable( minimalUnsatCore );            
+            queryVariableTruthValue = userInterface->askTruthValue( queryVariable );            
             Literal lit( queryVariable, queryVariableTruthValue == TRUE ? POSITIVE : NEGATIVE );
             queryHistory.push_back( queryVariable );
             answerHistory.push_back( queryVariableTruthValue );
 
-            cout << lit << endl;
+            assert( solver.getCurrentDecisionLevel() == 0 );
+            assert( !solver.isFalse( lit ) );
             solver.addClause( lit );
 
             if ( computeUnsatCore( assumptions ) == INCOHERENT )
@@ -117,13 +117,13 @@ DebugInterface::readDebugMapping( Istream& stream )
         {
             // format: DEBUG_MAP_ENTRY debugConstant #variables variables rule
             string debugConstant, rule, word;
-            size_t numVars = 0;
+            unsigned int numVars = 0;
             vector< string > variables;
 
             stream.read( debugConstant );
             stream.read( numVars );
 
-            for ( size_t i = 0; i < numVars; i++ )
+            for ( unsigned int i = 0; i < numVars; i++ )
             {
                 string var;
                 stream.read( var );
@@ -158,7 +158,7 @@ DebugInterface::computeUnsatCore(
     vector< Literal > assumptionsOR;
 
     solver.setComputeUnsatCores( true );
-    solver.setComputeMinimalUnsatCore( true );
+    solver.setComputeMinimalUnsatCore( false );
 
     unsigned int result = solver.solve( assumptionsAND, assumptionsOR );
 
@@ -209,7 +209,7 @@ DebugInterface::determineQueryVariable(
         vector< Literal > relaxedAssumptions;
         for ( size_t i = 0; i < parentAssumptions.size(); i ++ )
         {
-            if ( parentAssumptions[ i ].getId() != relaxLiteral.getId() )
+            if ( parentAssumptions[ i ].getVariable() != relaxLiteral.getVariable() )
             {
                 relaxedAssumptions.push_back( parentAssumptions[ i ] );
             }

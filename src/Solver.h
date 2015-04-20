@@ -2493,6 +2493,7 @@ Solver::computeMinimalUnsatCore(
     for( int i = assumptionsAND.size() - 1; i >= 0; i-- )
     {
         unrollToZero();
+        clearConflictStatus();
         computeUnsatCores_ = false;
         Literal currentLiteral = assumptionsAND[ i ];
         setAssumptionAND( currentLiteral, false );

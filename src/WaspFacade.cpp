@@ -68,6 +68,7 @@ WaspFacade::readInput()
 
             if( debugInterface != NULL ) {
                 debugInterface->readDebugMapping( in );
+                solver.disableVariableElimination();
             }
 
 //            solver.setOutputBuilder( new WaspOutputBuilder() );

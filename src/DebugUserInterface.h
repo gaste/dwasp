@@ -31,6 +31,7 @@ using namespace std;
 enum UserCommand {
 	SHOW_CORE,
 	ASK_QUERY,
+	SHOW_HISTORY,
 	EXIT
 };
 
@@ -43,6 +44,7 @@ public:
 	virtual ~DebugUserInterface() = 0;
 	virtual UserCommand promptCommand() = 0;
 	virtual void printCore( vector< Literal >& literals ) = 0;
+	virtual void printHistory( vector< Var > queryHistory, vector< TruthValue > answerHistory ) = 0;
 	virtual TruthValue askTruthValue( Var variable ) = 0;
 };
 

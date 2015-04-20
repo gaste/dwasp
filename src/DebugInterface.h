@@ -57,6 +57,9 @@ class DebugInterface
         QuickXPlain coreMinimizer;
         DebugUserInterface* userInterface;
         vector< Literal > assumptions;
+        vector< Var > queryHistory;
+        vector< TruthValue > answerHistory;
+        vector< Clause* > clauseHistory;
 };
 
 #endif

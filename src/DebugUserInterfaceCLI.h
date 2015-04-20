@@ -32,6 +32,7 @@ public:
 	~DebugUserInterfaceCLI() {};
 	UserCommand promptCommand();
 	void printCore( vector< Literal >& literals );
+	void printHistory( vector< Var > queryHistory, vector< TruthValue > answerHistory );
 	TruthValue askTruthValue( Var variable );
 
 private:

@@ -25,13 +25,6 @@
 #include "util/RuleNames.h"
 #include <string>
 
-/**
- * gets all literals (IDs) from a clause
- * used to get the literals from the unsatisfiable core
- *
- * @param unsatCore (input) the unsatisfiable core (or a other clause)
- * @return a vector of literal IDs
- */
 vector< Literal > DebugInterface::clauseToVector( const Clause& clause )
 {
 	vector< Literal > debugLiterals;
@@ -44,11 +37,6 @@ vector< Literal > DebugInterface::clauseToVector( const Clause& clause )
 	return debugLiterals;
 }
 
-/**
- * the main debugging method
- * tries to solve the input program (with the input assumptions)
- * if it is INCOHERENT the unsatisfiable core is minimized by using the QuickXPlain algorithm (calculate preferred conflict)
- */
 void DebugInterface::debug()
 {
     Var queryVariable;
@@ -57,7 +45,8 @@ void DebugInterface::debug()
     
     trace_msg( debug, 1, "Start debugging with _debug assumptions" );
 
-    if ( computeUnsatCore( assumptions ) != INCOHERENT ) {
+    if ( computeUnsatCore( assumptions ) != INCOHERENT )
+    {
         ErrorMessage::errorGeneric( "Program not INCOHERENT" );
         return;
     }
@@ -72,11 +61,20 @@ void DebugInterface::debug()
         case SHOW_CORE:
             userInterface->printCore( minimalUnsatCore );
             break;
+        case SHOW_HISTORY:
+            userInterface->printHistory( queryHistory, answerHistory );
+            break;
         case ASK_QUERY:
+        {
             queryVariable = determineQueryVariable( minimalUnsatCore );
             queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
 
-            // TODO set the variable in the solver
+            Literal lit( queryVariable, queryVariableTruthValue == TRUE ? POSITIVE : NEGATIVE );
+            queryHistory.push_back( queryVariable );
+            answerHistory.push_back( queryVariableTruthValue );
+
+            cout << lit << endl;
+            solver.addClause( lit );
 
             if ( computeUnsatCore( assumptions ) == INCOHERENT )
             {
@@ -90,6 +88,7 @@ void DebugInterface::debug()
                 continueDebugging = false;
             }
             break;
+        }
         case EXIT:
             continueDebugging = false;
             break;
@@ -178,14 +177,16 @@ DebugInterface::determineQueryVariable( const vector< Literal >& unsatCore )
 
     unsigned int numModels = determineQueryVariable( unsatCore, variableInModel, assumptions, 1 );
 
-    for ( pair< Var, unsigned int > variableOccurancePair : variableInModel )
+    for ( pair< Var, unsigned int > pair : variableInModel )
     {
-        float val = (variableOccurancePair.second == 0) ? 0.5 : (0.5 - variableOccurancePair.second / (float)numModels);
+        Var variable = pair.first;
+        unsigned int numTrueInModels = pair.second;
+        float val = (numTrueInModels == 0) ? 0.5 : (0.5 - numTrueInModels / (float)numModels);
         val = val < 0 ? -val : val;
 
-        if ( val < bestValue )
+        if ( val < bestValue && find( queryHistory.begin(), queryHistory.end(), variable ) == queryHistory.end() )
         {
-            queryVariable = variableOccurancePair.first;
+            queryVariable = variable;
             bestValue = val;
         }
     }
@@ -214,15 +215,7 @@ DebugInterface::determineQueryVariable(
             }
         }
 
-        vector< Literal > assumptionsAnd ( relaxedAssumptions );
-        vector< Literal > assumptionsOr;
-
-        unsigned int result = solver.solve( assumptionsAnd, assumptionsOr );
-
-        solver.unrollToZero();
-        solver.clearConflictStatus();
-
-        if ( result == COHERENT )
+        if ( computeUnsatCore( relaxedAssumptions ) == COHERENT )
         {
             numModels ++;
             trace_msg( debug, level, "Model found after relaxing "  + Formatter::formatLiteral( relaxLiteral ) );

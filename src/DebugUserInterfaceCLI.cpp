@@ -38,6 +38,10 @@ DebugUserInterfaceCLI::promptCommand()
 		{
 			return SHOW_CORE;
 		}
+		else if( userInput == "history" )
+		{
+		    return SHOW_HISTORY;
+		}
 		else if( userInput == "ask" )
 		{
 			return ASK_QUERY;
@@ -50,6 +54,7 @@ DebugUserInterfaceCLI::promptCommand()
 		{
 			cout << "Invalid command. Available commands:" << endl
 				 << "    print: show the UNSAT core" << endl
+				 << "    history: show the debug history" << endl
 				 << "    ask: ask me a query" << endl
 				 << "    exit: stop the debugging session";
 		}
@@ -63,10 +68,19 @@ DebugUserInterfaceCLI::printCore( vector< Literal >& literals )
     {
         for ( unsigned int i = 0; i < literals.size(); i++ )
         {
-            cout << RuleNames::getRule( VariableNames::getName( literals[i].getVariable() ) ) << endl
-                 << "    substitution = "
+            cout << RuleNames::getRule( VariableNames::getName( literals[i].getVariable() ) ) << " "
                  << RuleNames::getSubstitution( VariableNames::getName( literals[i].getVariable() ) ) << endl ;
         }
+    }
+}
+
+void
+DebugUserInterfaceCLI::printHistory( vector< Var > queryHistory, vector< TruthValue > answerHistory )
+{
+    for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
+    {
+        cout << i << ": " << VariableNames::getName( queryHistory[ i ] ) << " = "
+             << (answerHistory[ i ] == TRUE ? "true" : "false") << endl;
     }
 }
 

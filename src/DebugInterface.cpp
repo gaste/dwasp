@@ -17,15 +17,24 @@
  */
 
 #include "DebugInterface.h"
-#include "DebugUserInterface.h"
-#include "DebugUserInterfaceCLI.h"
-#include "QuickXPlain.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <utility>
+
 #include "Solver.h"
+#include "util/ErrorMessage.h"
 #include "util/Formatter.h"
 #include "util/RuleNames.h"
-#include <string>
+#include "util/Trace.h"
 
-vector< Literal > DebugInterface::clauseToVector( const Clause& clause )
+vector< Literal >
+DebugInterface::clauseToVector(
+    const Clause& clause )
 {
 	vector< Literal > debugLiterals;
 
@@ -37,15 +46,25 @@ vector< Literal > DebugInterface::clauseToVector( const Clause& clause )
 	return debugLiterals;
 }
 
-void DebugInterface::debug()
+bool
+DebugInterface::isDebugVariable(
+    const Var variable )
 {
-    Var queryVariable;
-    TruthValue queryVariableTruthValue;
+    for ( Literal debugLiteral : debugLiterals )
+        if ( debugLiteral.getVariable() == variable )
+            return true;
+
+    return false;
+}
+
+void
+DebugInterface::debug()
+{
     bool continueDebugging = true;
     
     trace_msg( debug, 1, "Start debugging with _debug assumptions" );
 
-    if ( computeUnsatCore( assumptions ) != INCOHERENT )
+    if ( computeUnsatCore( debugLiterals ) != INCOHERENT )
     {
         ErrorMessage::errorGeneric( "Program not INCOHERENT" );
         return;
@@ -66,8 +85,8 @@ void DebugInterface::debug()
             break;
         case ASK_QUERY:
         {
-            queryVariable = determineQueryVariable( minimalUnsatCore );            
-            queryVariableTruthValue = userInterface->askTruthValue( queryVariable );            
+            Var queryVariable = determineQueryVariable( minimalUnsatCore );
+            TruthValue queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
             Literal lit( queryVariable, queryVariableTruthValue == TRUE ? POSITIVE : NEGATIVE );
             queryHistory.push_back( queryVariable );
             answerHistory.push_back( queryVariableTruthValue );
@@ -76,7 +95,7 @@ void DebugInterface::debug()
             assert( !solver.isFalse( lit ) );
             solver.addClause( lit );
 
-            if ( computeUnsatCore( assumptions ) == INCOHERENT )
+            if ( computeUnsatCore( debugLiterals ) == INCOHERENT )
             {
                 assert( solver.getUnsatCore() != NULL );
                 minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
@@ -99,7 +118,8 @@ void DebugInterface::debug()
 }
 
 void
-DebugInterface::readDebugMapping( Istream& stream )
+DebugInterface::readDebugMapping(
+    Istream& stream )
 {
     bool doneParsing = 0;
     trace_msg( debug, 1, "Parsing debug mapping table" );
@@ -140,7 +160,7 @@ DebugInterface::readDebugMapping( Istream& stream )
                     rule += " ";
             } while ( word[ word.length() - 1 ] != '.' );
 
-            trace_msg( debug, 2, "Adding { " + debugConstant + " -> " + rule + " } to the rule map" );
+            trace_msg( debug, 2, "Adding { " << debugConstant << " -> " << rule << " } to the rule map" );
             RuleNames::addRule( debugConstant, rule, variables );
         }
         else
@@ -158,6 +178,7 @@ DebugInterface::computeUnsatCore(
     vector< Literal > assumptionsOR;
 
     solver.setComputeUnsatCores( true );
+    solver.setMinimizeUnsatCore( true );
     solver.setComputeMinimalUnsatCore( false );
 
     unsigned int result = solver.solve( assumptionsAND, assumptionsOR );
@@ -169,25 +190,26 @@ DebugInterface::computeUnsatCore(
 }
 
 Var
-DebugInterface::determineQueryVariable( const vector< Literal >& unsatCore )
+DebugInterface::determineQueryVariable(
+    const vector< Literal >& unsatCore )
 {
     Var queryVariable = unsatCore[ 0 ].getVariable();
-    map< Var, unsigned int > variableInModel;
-    float bestValue = 1;
+    map< Var, int > variableEntropy;
 
-    unsigned int numModels = determineQueryVariable( unsatCore, variableInModel, assumptions, 1 );
+    unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, debugLiterals, 1 );
+    unsigned int lowestEntropy = numModels + 1;
 
-    for ( pair< Var, unsigned int > pair : variableInModel )
+    for ( pair< Var, unsigned int > pair : variableEntropy )
     {
         Var variable = pair.first;
-        unsigned int numTrueInModels = pair.second;
-        float val = (numTrueInModels == 0) ? 0.5 : (0.5 - numTrueInModels / (float)numModels);
-        val = val < 0 ? -val : val;
+        unsigned int entropy = abs( pair.second );
 
-        if ( val < bestValue && find( queryHistory.begin(), queryHistory.end(), variable ) == queryHistory.end() )
+        if ( entropy < lowestEntropy &&
+             find( queryHistory.begin(), queryHistory.end(), variable ) == queryHistory.end() &&
+             !isDebugVariable( variable ) )
         {
             queryVariable = variable;
-            bestValue = val;
+            lowestEntropy = entropy;
         }
     }
 
@@ -197,7 +219,7 @@ DebugInterface::determineQueryVariable( const vector< Literal >& unsatCore )
 unsigned int
 DebugInterface::determineQueryVariable(
     const vector< Literal >& unsatCore,
-    map< Var, unsigned int >& countTrueInModels,
+    map< Var, int >& variableEntropy,
     const vector< Literal >& parentAssumptions,
     unsigned int level )
 {
@@ -205,9 +227,9 @@ DebugInterface::determineQueryVariable(
 
     for ( Literal relaxLiteral : unsatCore )
     {
-        trace_msg( debug, level, "Relaxing " + Formatter::formatLiteral( relaxLiteral ) );
+        trace_msg( debug, level, "Relaxing " << Formatter::formatLiteral( relaxLiteral ) );
         vector< Literal > relaxedAssumptions;
-        for ( size_t i = 0; i < parentAssumptions.size(); i ++ )
+        for ( unsigned int i = 0; i < parentAssumptions.size(); i ++ )
         {
             if ( parentAssumptions[ i ].getVariable() != relaxLiteral.getVariable() )
             {
@@ -215,31 +237,36 @@ DebugInterface::determineQueryVariable(
             }
         }
 
-        if ( computeUnsatCore( relaxedAssumptions ) == COHERENT )
+        if ( relaxedAssumptions.size() == parentAssumptions.size() )
+        {
+            trace_msg( debug, level, "Could not relax " << relaxLiteral << " because it was not inside the parent assumptions" );
+        }
+        else if ( computeUnsatCore( relaxedAssumptions ) == COHERENT )
         {
             numModels ++;
-            trace_msg( debug, level, "Model found after relaxing "  + Formatter::formatLiteral( relaxLiteral ) );
-            size_t numAssignedVariables = solver.numberOfAssignedLiterals();
+            trace_msg( debug, level, "Model found after relaxing " << Formatter::formatLiteral( relaxLiteral ) );
 
-            for ( size_t i = 0; i < numAssignedVariables; i ++ )
+            unsigned int numAssignedVariables = solver.numberOfAssignedLiterals();
+
+            for ( unsigned int i = 0; i < numAssignedVariables; i ++ )
             {
                 Var variable = solver.getAssignedVariable( i );
                 TruthValue value = solver.getTruthValue( variable );
 
-                if ( countTrueInModels.count( variable ) == 0 )
+                if ( variableEntropy.count( variable ) == 0 )
                 {
-                    countTrueInModels[ variable ] = (value == TRUE ? 1 : 0);
+                    variableEntropy[ variable ] = (value == TRUE ? 1 : -1);
                 }
                 else
                 {
-                    countTrueInModels[ variable ] = countTrueInModels[ variable ] + (value == TRUE ? 1 : 0);
+                    variableEntropy[ variable ] += (value == TRUE ? 1 : -1);
                 }
             }
         }
         else
         {
             vector< Literal > relaxedUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ), level + 1 );
-            numModels += determineQueryVariable( relaxedUnsatCore, countTrueInModels, relaxedAssumptions, level + 1 );
+            numModels += determineQueryVariable( relaxedUnsatCore, variableEntropy, relaxedAssumptions, level + 1 );
         }
     }
 

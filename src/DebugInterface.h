@@ -19,8 +19,13 @@
 #ifndef DEBUGINTERFACE_H
 #define DEBUGINTERFACE_H
 
-#include <vector>
 #include <map>
+#include <vector>
+
+#include "util/Constants.h"
+
+class Istream;
+
 using namespace std;
 
 #include "Literal.h"
@@ -42,24 +47,24 @@ class DebugInterface
 {    
 	public:
         inline DebugInterface( Solver& s ) : solver( s ), coreMinimizer( s ), userInterface( new DebugUserInterfaceCLI() ) {}
-        void addAssumption( Literal l ) { assumptions.push_back( l ); }
-        void debug();
+        void addDebugLiteral( Literal l ) { debugLiterals.push_back( l ); }
         void readDebugMapping( Istream& stream );
+        void debug();
 
     private:
         DebugInterface( const DebugInterface& );
         Var determineQueryVariable( const vector< Literal >& unsatCore );
-        unsigned int determineQueryVariable( const vector< Literal >& unsatCore, map< Var, unsigned int >& countTrueInModels, const vector< Literal >& relaxedLiterals, unsigned int level );
+        unsigned int determineQueryVariable( const vector< Literal >& unsatCore, map< Var, int >& variableEntropy, const vector< Literal >& relaxedLiterals, unsigned int level );
         vector< Literal > clauseToVector( const Clause& unsatCore );
         unsigned int computeUnsatCore( const vector< Literal >& assumptions );
+        bool isDebugVariable( const Var variable );
 
         Solver& solver;
         QuickXPlain coreMinimizer;
         DebugUserInterface* userInterface;
-        vector< Literal > assumptions;
+        vector< Literal > debugLiterals;
         vector< Var > queryHistory;
         vector< TruthValue > answerHistory;
-        vector< Clause* > clauseHistory;
 };
 
 #endif

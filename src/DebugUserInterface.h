@@ -20,6 +20,7 @@
 #define DEBUGUSERINTERFACE_H
 
 #include <vector>
+
 #include "Literal.h"
 #include "util/Constants.h"
 

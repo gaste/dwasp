@@ -20,6 +20,7 @@
 #define QUICKXPLAIN_H
 
 #include <vector>
+
 using namespace std;
 
 #include "Literal.h"

@@ -17,6 +17,7 @@
  */
 
 #include "RuleNames.h"
+
 #include "Assert.h"
 
 map< string, string > RuleNames::ruleMap;
@@ -25,7 +26,7 @@ map< string, vector< string > > RuleNames::variablesMap;
 const string&
 RuleNames::getRule( string debugAtom )
 {
-    size_t parenthesisIndex = debugAtom.find( '(' );
+    unsigned int parenthesisIndex = debugAtom.find( '(' );
 
     if (parenthesisIndex == string::npos )
     {
@@ -41,7 +42,7 @@ string
 RuleNames::getSubstitution( string debugAtom )
 {
     string substitution = "";
-    size_t parenthesisIndex = debugAtom.find( '(' );
+    unsigned int parenthesisIndex = debugAtom.find( '(' );
 
     if ( parenthesisIndex != string::npos )
     {
@@ -54,7 +55,7 @@ RuleNames::getSubstitution( string debugAtom )
 
         substitution = "{ ";
         substitution += variables[0] + "/" + terms[ 0 ];
-        for ( size_t i = 1; i < terms.size(); i++ )
+        for ( unsigned int i = 1; i < terms.size(); i++ )
         {
             substitution += ", " + variables[i] + "/" + terms[ i ];
         }
@@ -78,7 +79,7 @@ RuleNames::getTerms( string term )
     vector< string > terms;
     string currentTerm = ""; // required for nested terms, i.e. _debug1(a(b,c),d)
 
-    for ( size_t i = 0; i < term.length(); i++ )
+    for ( unsigned int i = 0; i < term.length(); i++ )
     {
         if ( term[ i ] == '(' )
         {

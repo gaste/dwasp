@@ -17,13 +17,9 @@
  */
 
 #include "DebugUserInterfaceCLI.h"
+
 #include "util/RuleNames.h"
 #include "util/VariableNames.h"
-#include "util/Formatter.h"
-#include <iostream>
-#include <string>
-
-using namespace std;
 
 UserCommand
 DebugUserInterfaceCLI::promptCommand()
@@ -79,8 +75,9 @@ DebugUserInterfaceCLI::printHistory( vector< Var > queryHistory, vector< TruthVa
 {
     for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
     {
-        cout << i << ": " << VariableNames::getName( queryHistory[ i ] ) << " = "
-             << (answerHistory[ i ] == TRUE ? "true" : "false") << endl;
+        cout << i << ": " << VariableNames::getName( queryHistory[ i ] )
+                << " = " << ((answerHistory[ i ] == TRUE) ? "true" : "false")
+                << endl;
     }
 }
 

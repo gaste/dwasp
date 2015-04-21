@@ -6,9 +6,17 @@
  */
 
 #include "QuickXPlain.h"
-#include "Solver.h"
-#include "util/Formatter.h"
+
+#include <algorithm>
+#include <iostream>
+#include <iterator>
 #include <string>
+#include <utility>
+
+#include "Solver.h"
+#include "util/Constants.h"
+#include "util/Formatter.h"
+#include "util/Trace.h"
 
 /**
  * Calculates the preferred conflict out of a number of conflicting literals using the QuickXplain algorithm
@@ -52,16 +60,16 @@ QuickXPlain::minimizeUnsatCore(
         const vector< Literal >& toCheck, const vector< Literal >& addedToCheck,
         const vector< Literal >& toSplit )
 {
-    trace_msg( debug, level + 1, "QXP level " << level << ": toCheck = " << Formatter::formatClause( toCheck ) << "; added = " << Formatter::formatClause( addedToCheck ) << "; notChecked = " << Formatter::formatClause( toSplit ) );
+    trace_msg( debug, level + 1, "ToCheck = " << Formatter::formatClause( toCheck ) << "; added = " << Formatter::formatClause( addedToCheck ) << "; notChecked = " << Formatter::formatClause( toSplit ) );
 
     if ( !addedToCheck.empty() && solveAndClearWithAssumptions(toCheck) == INCOHERENT )
     {
-        trace_msg( debug, level + 1, "QXP level " << level << ": nothing to check and INCOHERENT for toCheck = " << Formatter::formatClause( toCheck ) << " -> prune" );
+        trace_msg( debug, level + 1, "Nothing to check and INCOHERENT for toCheck = " << Formatter::formatClause( toCheck ) << " -> prune" );
         return vector< Literal >();
     }
 	else if ( toSplit.size() == 1 )
 	{
-        trace_msg( debug, level + 1, "QXP level " << level << ": only " << Formatter::formatLiteral( toSplit.front() ) << " left -> add to minimal core");
+        trace_msg( debug, level + 1, "Only " << Formatter::formatLiteral( toSplit.front() ) << " left -> add to minimal core");
 		return toSplit;
 	}
 	else
@@ -70,19 +78,16 @@ QuickXPlain::minimizeUnsatCore(
 	    vector< Literal > secondHalf;
 		partitionVector(toSplit, firstHalf, secondHalf);
 
-        trace_msg( debug, level + 1, "QXP level " << level << ": partition " << Formatter::formatClause( toSplit ) << " into " << Formatter::formatClause( firstHalf ) << " and " << Formatter::formatClause(secondHalf) );
+        trace_msg( debug, level + 1, "Partition " << Formatter::formatClause( toSplit ) << " into " << Formatter::formatClause( firstHalf ) << " and " << Formatter::formatClause( secondHalf ) );
 
-		// first partial result
-		vector< Literal > firstResult = minimizeUnsatCore(level + 1, appendToVector(toCheck, firstHalf), firstHalf, secondHalf);
+		vector< Literal > secondResult = minimizeUnsatCore( level + 1, appendToVector( toCheck, firstHalf ), firstHalf, secondHalf );
+		vector< Literal > firstResult = minimizeUnsatCore( level + 1, appendToVector( toCheck, secondResult ), secondResult, firstHalf );
 
-		trace_msg( debug, level + 1, "QXP level " << level << ": first result is " << Formatter::formatClause( firstResult ) );
+        trace_msg( debug, level + 1, "First result is " << Formatter::formatClause( firstResult ) );
+		trace_msg( debug, level + 1, "Second result is " << Formatter::formatClause( secondResult ) );
 
-		// second partial result
-		vector< Literal > secondResult = minimizeUnsatCore(level + 1, appendToVector(toCheck, firstResult), firstResult, firstHalf);
-		trace_msg( debug, level + 1, "QXP level " << level << ": second result is " << Formatter::formatClause( secondResult ) );
-
-		vector< Literal > result = appendToVector( firstResult, secondResult );
-        trace_msg( debug, level + 1, "QXP level " << level << ": add " << Formatter::formatClause( result ) << " to minimal core" );
+		vector< Literal > result = appendToVector( secondResult, firstResult );
+        trace_msg( debug, level + 1, "Adding " << Formatter::formatClause( result ) << " to the minimal core" );
 		return result;
 	}
 }

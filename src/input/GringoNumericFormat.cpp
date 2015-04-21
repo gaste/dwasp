@@ -1039,7 +1039,7 @@ GringoNumericFormat::readAtomsTable(
             if( strName.length() > debug.length() && strName.compare( 0, 6, debug ) == 0 )
             {
                 solver.setFrozen( nextAtom );
-                debugInterface->addAssumption( Literal( nextAtom ) );
+                debugInterface->addDebugLiteral( Literal( nextAtom ) );
                 solver.setOptLit( Literal( nextAtom, NEGATIVE ) );
             }
         }

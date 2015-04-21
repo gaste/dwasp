@@ -19,8 +19,13 @@
 #ifndef DEBUGUSERINTERFACECLI_H
 #define DEBUGUSERINTERFACECLI_H
 
-#include "DebugUserInterface.h"
 #include <iostream>
+#include <string>
+#include <vector>
+
+#include "DebugUserInterface.h"
+#include "Literal.h"
+#include "util/Constants.h"
 
 /**
  * CLI implementation of the debug user interface.

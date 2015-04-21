@@ -17,26 +17,29 @@
  */
 
 #include "Formatter.h"
+
 #include "VariableNames.h"
 
 string
-Formatter::formatLiteral( Literal literal )
+Formatter::formatLiteral(
+    Literal literal )
 {
-    return literal.isNegative() ? "-" : "" + VariableNames::getName(literal.getVariable());
+    return (literal.isNegative() ? "-" : "") + VariableNames::getName( literal.getVariable() );
 }
 
 string
-Formatter::formatClause( vector< Literal > clause )
+Formatter::formatClause(
+    vector< Literal > clause )
 {
     string formatted( "{ " );
 
     if ( !clause.empty() )
     {
-        formatted += formatLiteral( clause[0] );
+        formatted += formatLiteral( clause[ 0 ] );
 
         for ( unsigned int i = 1; i < clause.size(); i++ )
         {
-            formatted += ", " + formatLiteral( clause[i] );
+            formatted += ", " + formatLiteral( clause[ i ] );
         }
     }
 

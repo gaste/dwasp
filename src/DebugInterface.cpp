@@ -25,12 +25,15 @@
 #include <iterator>
 #include <string>
 #include <utility>
+#include <fstream>
+#include <iostream>
 
 #include "Solver.h"
 #include "util/ErrorMessage.h"
 #include "util/Formatter.h"
 #include "util/RuleNames.h"
 #include "util/Trace.h"
+#include "util/VariableNames.h"
 
 vector< Literal >
 DebugInterface::clauseToVector(
@@ -316,12 +319,49 @@ bool
 DebugInterface::loadHistory(
     const string& filename )
 {
-    return false;
+	string ruleHistory = "", answer;
+	unsigned int query;
+
+	ifstream historyFile ( filename );
+
+	if ( !historyFile.is_open() )
+		return false;
+
+	while ( getline ( historyFile, ruleHistory ) )
+	{
+		int pos = ruleHistory.find(" ");
+
+		query = atoi( ruleHistory.substr( 0, pos ).c_str() );
+		answer = ruleHistory.substr( pos+1, ruleHistory.length() );
+
+		queryHistory.push_back( query );
+		answerHistory.push_back( ( answer == "true" ) ? TRUE : FALSE );
+	}
+	historyFile.close();
+
+    return true;
 }
 
 bool
 DebugInterface::saveHistory(
     const string& filename )
 {
-    return false;
+	string ruleHistory = "";
+
+	for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
+	{
+		ruleHistory += to_string ( queryHistory[ i ] ) + " " +
+					   ( ( answerHistory[ i ] == TRUE ) ? "true" : "false" ) + "\n";
+	}
+
+	ofstream historyFile ( filename );
+
+	if ( !historyFile.is_open() )
+		return false;
+
+	historyFile << ruleHistory;
+
+	historyFile.close();
+
+    return true;
 }

@@ -36,9 +36,20 @@ public:
 	DebugUserInterfaceCLI() {};
 	~DebugUserInterfaceCLI() {};
 	UserCommand promptCommand();
-	void printCore( vector< Literal >& literals );
-	void printHistory( vector< Var > queryHistory, vector< TruthValue > answerHistory );
-	TruthValue askTruthValue( Var variable );
+	void printCore( const vector< Literal >& core );
+	void printCoreGroundRules( const vector< Literal >& core );
+    void printCoreUngroundRules( const vector< Literal >& core );
+	void printHistory( const vector< Var >& queryHistory, const vector< TruthValue >& answerHistory );
+	string askHistoryFilename();
+	TruthValue askTruthValue( const Var variable );
+	Literal getAssertion();
+    void greetUser();
+    void informSolving();
+    void informComputingQueryVariable();
+    void informSavedHistory( const string& filename );
+    void informLoadedHistory( const string& filename );
+    void informCouldNotSaveHistory( const string& filename );
+    void informCouldNotLoadHistory( const string& filename );
 
 private:
 	inline void promptInput (string& input) { cout << endl << "WDB> "; getline(cin, input); }

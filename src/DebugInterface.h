@@ -57,6 +57,8 @@ class DebugInterface
         unsigned int determineQueryVariable( const vector< Literal >& unsatCore, map< Var, int >& variableEntropy, const vector< Literal >& relaxedLiterals, unsigned int level );
         vector< Literal > clauseToVector( const Clause& unsatCore );
         unsigned int computeUnsatCore( const vector< Literal >& assumptions );
+        bool saveHistory( const string& filename );
+        bool loadHistory( const string& filename );
         bool isDebugVariable( const Var variable );
 
         Solver& solver;

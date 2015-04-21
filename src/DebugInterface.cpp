@@ -64,6 +64,9 @@ DebugInterface::debug()
     
     trace_msg( debug, 1, "Start debugging with _debug assumptions" );
 
+    userInterface->greetUser();
+    userInterface->informSolving();
+
     if ( computeUnsatCore( debugLiterals ) != INCOHERENT )
     {
         ErrorMessage::errorGeneric( "Program not INCOHERENT" );
@@ -80,11 +83,45 @@ DebugInterface::debug()
         case SHOW_CORE:
             userInterface->printCore( minimalUnsatCore );
             break;
+        case SHOW_CORE_GROUND_RULES:
+            userInterface->printCoreGroundRules( minimalUnsatCore );
+            break;
+        case SHOW_CORE_NONGROUND_RULES:
+            userInterface->printCoreUngroundRules( minimalUnsatCore );
+            break;
         case SHOW_HISTORY:
             userInterface->printHistory( queryHistory, answerHistory );
             break;
+        case SAVE_HISTORY:
+        {
+            string filename = userInterface->askHistoryFilename();
+
+            if ( saveHistory( filename ) )
+                userInterface->informSavedHistory( filename );
+            else
+                userInterface->informCouldNotSaveHistory( filename );
+            break;
+        }
+        case LOAD_HISTORY:
+        {
+            string filename = userInterface->askHistoryFilename();
+
+            if ( loadHistory( filename ) )
+                userInterface->informLoadedHistory( filename );
+            else
+                userInterface->informCouldNotLoadHistory( filename );
+
+            break;
+        }
+        case ASSERT_VARIABLE:
+        {
+            Literal assertion = userInterface->getAssertion();
+            //TODO implement adding the user's assertion
+            break;
+        }
         case ASK_QUERY:
         {
+            userInterface->informComputingQueryVariable();
             Var queryVariable = determineQueryVariable( minimalUnsatCore );
             TruthValue queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
             Literal lit( queryVariable, queryVariableTruthValue == TRUE ? POSITIVE : NEGATIVE );
@@ -94,6 +131,8 @@ DebugInterface::debug()
             assert( solver.getCurrentDecisionLevel() == 0 );
             assert( !solver.isFalse( lit ) );
             solver.addClause( lit );
+
+            userInterface->informSolving();
 
             if ( computeUnsatCore( debugLiterals ) == INCOHERENT )
             {
@@ -271,4 +310,18 @@ DebugInterface::determineQueryVariable(
     }
 
     return numModels;
+}
+
+bool
+DebugInterface::loadHistory(
+    const string& filename )
+{
+    return false;
+}
+
+bool
+DebugInterface::saveHistory(
+    const string& filename )
+{
+    return false;
 }

@@ -58,20 +58,37 @@ DebugUserInterfaceCLI::promptCommand()
 }
 
 void
-DebugUserInterfaceCLI::printCore( vector< Literal >& literals )
+DebugUserInterfaceCLI::printCore(
+    const vector< Literal >& core )
 {
-    if ( !literals.empty() )
+    if ( !core.empty() )
     {
-        for ( unsigned int i = 0; i < literals.size(); i++ )
+        for ( unsigned int i = 0; i < core.size(); i++ )
         {
-            cout << RuleNames::getRule( VariableNames::getName( literals[i].getVariable() ) ) << " "
-                 << RuleNames::getSubstitution( VariableNames::getName( literals[i].getVariable() ) ) << endl ;
+            cout << RuleNames::getRule( VariableNames::getName( core[i].getVariable() ) ) << " "
+                 << RuleNames::getSubstitution( VariableNames::getName( core[i].getVariable() ) ) << endl ;
         }
     }
 }
 
 void
-DebugUserInterfaceCLI::printHistory( vector< Var > queryHistory, vector< TruthValue > answerHistory )
+DebugUserInterfaceCLI::printCoreGroundRules(
+    const vector< Literal >& core )
+{
+
+}
+
+void
+DebugUserInterfaceCLI::printCoreUngroundRules(
+    const vector< Literal >& core )
+{
+
+}
+
+void
+DebugUserInterfaceCLI::printHistory(
+    const vector< Var >& queryHistory,
+    const vector< TruthValue >& answerHistory )
 {
     for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
     {
@@ -82,7 +99,8 @@ DebugUserInterfaceCLI::printHistory( vector< Var > queryHistory, vector< TruthVa
 }
 
 TruthValue
-DebugUserInterfaceCLI::askTruthValue( Var variable )
+DebugUserInterfaceCLI::askTruthValue(
+    const Var variable )
 {
 	string userInput;
 
@@ -96,4 +114,63 @@ DebugUserInterfaceCLI::askTruthValue( Var variable )
 		if ( userInput == "y" ) return TRUE;
 		else if ( userInput == "n" ) return FALSE;
 	} while(true);
+}
+
+string
+DebugUserInterfaceCLI::askHistoryFilename()
+{
+    return "";
+}
+
+Literal
+DebugUserInterfaceCLI::getAssertion()
+{
+    return Literal( 1 );
+}
+
+
+void
+DebugUserInterfaceCLI::greetUser()
+{
+
+}
+
+void
+DebugUserInterfaceCLI::informSolving()
+{
+
+}
+
+void
+DebugUserInterfaceCLI::informComputingQueryVariable()
+{
+
+}
+
+void
+DebugUserInterfaceCLI::informSavedHistory(
+    const string& filename )
+{
+
+}
+
+void
+DebugUserInterfaceCLI::informLoadedHistory(
+    const string& filename )
+{
+
+}
+
+void
+DebugUserInterfaceCLI::informCouldNotSaveHistory(
+    const string& filename )
+{
+
+}
+
+void
+DebugUserInterfaceCLI::informCouldNotLoadHistory(
+    const string& filename )
+{
+
 }

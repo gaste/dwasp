@@ -31,8 +31,13 @@ using namespace std;
  */
 enum UserCommand {
 	SHOW_CORE,
-	ASK_QUERY,
+	SHOW_CORE_GROUND_RULES,
+	SHOW_CORE_NONGROUND_RULES,
 	SHOW_HISTORY,
+    ASK_QUERY,
+    SAVE_HISTORY,
+    LOAD_HISTORY,
+    ASSERT_VARIABLE,
 	EXIT
 };
 
@@ -44,9 +49,20 @@ class DebugUserInterface
 public:
 	virtual ~DebugUserInterface() = 0;
 	virtual UserCommand promptCommand() = 0;
-	virtual void printCore( vector< Literal >& literals ) = 0;
-	virtual void printHistory( vector< Var > queryHistory, vector< TruthValue > answerHistory ) = 0;
-	virtual TruthValue askTruthValue( Var variable ) = 0;
+	virtual void printCore( const vector< Literal >& core ) = 0;
+	virtual void printCoreGroundRules( const vector< Literal >& core ) = 0;
+	virtual void printCoreUngroundRules( const vector< Literal >& core ) = 0;
+	virtual void printHistory( const vector< Var >& queryHistory, const vector< TruthValue >& answerHistory ) = 0;
+	virtual string askHistoryFilename() = 0;
+	virtual TruthValue askTruthValue( const Var variable ) = 0;
+	virtual Literal getAssertion() = 0;
+	virtual void greetUser() = 0;
+	virtual void informSolving() = 0;
+	virtual void informComputingQueryVariable() = 0;
+	virtual void informSavedHistory( const string& filename ) = 0;
+	virtual void informLoadedHistory( const string& filename ) = 0;
+	virtual void informCouldNotSaveHistory( const string& filename ) = 0;
+	virtual void informCouldNotLoadHistory( const string& filename ) = 0;
 };
 
 inline DebugUserInterface::~DebugUserInterface() { }

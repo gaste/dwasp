@@ -290,18 +290,18 @@ DebugInterface::determineQueryVariable(
 
             unsigned int numAssignedVariables = solver.numberOfAssignedLiterals();
 
-            for ( unsigned int i = 0; i < numAssignedVariables; i ++ )
+            for( unsigned int i = 1; i <= solver.numberOfVariables(); i++ )
             {
-                Var variable = solver.getAssignedVariable( i );
-                TruthValue value = solver.getTruthValue( variable );
+                Var variable = i;
+                bool isTrue = solver.isTrue( variable );
 
                 if ( variableEntropy.count( variable ) == 0 )
                 {
-                    variableEntropy[ variable ] = (value == TRUE ? 1 : -1);
+                    variableEntropy[ variable ] = (isTrue ? 1 : -1);
                 }
                 else
                 {
-                    variableEntropy[ variable ] += (value == TRUE ? 1 : -1);
+                    variableEntropy[ variable ] += (isTrue ? 1 : -1);
                 }
             }
         }

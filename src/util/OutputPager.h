@@ -27,6 +27,10 @@ class OutputPager
 {
     public:
         static void paginate( const string& output );
+        static void setPageSize ( const int& size );
+
+    private:
+        static unsigned int pageSize;
 };
 
 #endif /* UTIL_OUTPUTPAGER_H */

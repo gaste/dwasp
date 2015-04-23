@@ -19,10 +19,49 @@
 #include "OutputPager.h"
 
 #include <iostream>
+#include <sstream>
+
+unsigned int OutputPager::pageSize = 15;
 
 void
 OutputPager::paginate(
     const string& output )
 {
-    cout << output;
+	stringstream stream;
+	string line, userInput;
+	bool printOutput = true;
+	unsigned int counter = 0;
+
+	stream << output;
+
+	while ( getline( stream, line ) && printOutput )
+	{
+		if ( counter < pageSize )
+		{
+			cout << line << endl;
+			counter++;
+		}
+		else
+		{
+			cout << endl;
+			cout << "-- display more? (y/n)";
+			getline( cin, userInput );
+			cout << endl;
+
+			if ( userInput == "y" )
+			{
+				cout << line << endl;
+				counter = 1;
+			}
+			else
+				printOutput = false;
+		}
+	}
+}
+
+void
+OutputPager::setPageSize (
+		const int& size )
+{
+	pageSize = size;
 }

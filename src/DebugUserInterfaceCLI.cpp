@@ -18,9 +18,12 @@
 
 #include "DebugUserInterfaceCLI.h"
 
+#include <algorithm>
+#include <cctype>
 #include <utility>
 
 #include "util/Formatter.h"
+#include "util/OutputPager.h"
 #include "util/RuleNames.h"
 #include "util/VariableNames.h"
 
@@ -64,38 +67,44 @@ DebugUserInterfaceCLI::promptCommand()
 void
 DebugUserInterfaceCLI::printHelp()
 {
-    cout << "Available commands:" << endl << endl;
+    string helpText = "Available commands:\n\n";
 
     for ( const auto& pair : commandMap )
     {
-        cout << pair.first << " -- " << pair.second.helpText << endl;
+        helpText += pair.first + " -- " + pair.second.helpText + "\n";
     }
+
+    OutputPager::paginate( helpText );
 }
 
 void
 DebugUserInterfaceCLI::printCore(
     const vector< Literal >& core )
 {
-    cout << Formatter::formatClause( core ) << endl;
+    OutputPager::paginate( Formatter::formatClause( core ) + "\n" );
 }
 
 void
 DebugUserInterfaceCLI::printCoreGroundRules(
     const vector< Literal >& core )
 {
+    string groundCoreRules = "";
     if ( !core.empty() )
     {
         for ( const Literal& coreLiteral : core )
         {
-            cout << RuleNames::getGroundRule( coreLiteral ) << endl;
+            groundCoreRules += RuleNames::getGroundRule( coreLiteral ) + "\n";
         }
     }
+
+    OutputPager::paginate( groundCoreRules );
 }
 
 void
 DebugUserInterfaceCLI::printCoreUngroundRules(
     const vector< Literal >& core )
 {
+    string coreUngroundRules = "";
     map< string, vector< string > > ruleSubstitutionMap;
 
     for( const Literal& coreLiteral : core )
@@ -111,13 +120,15 @@ DebugUserInterfaceCLI::printCoreUngroundRules(
 
     for ( const auto& mapEntry : ruleSubstitutionMap )
     {
-        cout << mapEntry.first << endl;
+        coreUngroundRules += mapEntry.first + "\n";
 
         for ( const string& substitution : mapEntry.second )
         {
-            cout << "    " << substitution << endl;
+            coreUngroundRules += "    " + substitution + "\n";
         }
     }
+
+    OutputPager::paginate( coreUngroundRules );
 }
 
 void
@@ -125,12 +136,16 @@ DebugUserInterfaceCLI::printHistory(
     const vector< Var >& queryHistory,
     const vector< TruthValue >& answerHistory )
 {
+    string history = "";
+
     for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
     {
-        cout << i << ": " << VariableNames::getName( queryHistory[ i ] )
-                << " = " << ((answerHistory[ i ] == TRUE) ? "true" : "false")
-                << endl;
+        history += i + ": " + VariableNames::getName( queryHistory[ i ] )
+                + " = " + ((answerHistory[ i ] == TRUE) ? "true" : "false")
+                + "\n";
     }
+
+    OutputPager::paginate( history );
 }
 
 TruthValue
@@ -142,9 +157,11 @@ DebugUserInterfaceCLI::askTruthValue(
 	do
 	{
 		cout << "Should '" << VariableNames::getName( variable )
-			 << "' be in the model? (y/n)" << endl;
+			 << "' be in the model? (y/n): ";
 
-		promptInput(userInput);
+		getline( cin, userInput );
+
+		transform( userInput.begin(), userInput.end(), userInput.begin(), ::tolower );
 
 		if ( userInput == "y" ) return TRUE;
 		else if ( userInput == "n" ) return FALSE;
@@ -156,14 +173,41 @@ DebugUserInterfaceCLI::askHistoryFilename()
 {
     string filename;
     cout << "Filename: ";
-    cin >> filename;
+    getline( cin, filename );
     return filename;
 }
 
 Literal
 DebugUserInterfaceCLI::getAssertion()
 {
-    return Literal( 1 );
+    bool inputCorrect = false;
+    string input;
+    Var assertionVariable;
+
+    do
+    {
+        cout << "Variable: ";
+        getline( cin, input );
+        inputCorrect = VariableNames::getVariable( input, assertionVariable );
+
+        if ( !inputCorrect )
+        {
+            cout << "No variable named \"" << input << "\" exists" << endl;
+        }
+    } while ( !inputCorrect );
+
+    inputCorrect = false;
+
+    do
+    {
+        cout << "Truth value (t/f): ";
+        getline( cin, input );
+        transform( input.begin(), input.end(), input.begin(), ::tolower );
+
+        inputCorrect = input == "t" || input == "f";
+    } while ( !inputCorrect );
+
+    return Literal( assertionVariable, input == "t" ? POSITIVE : NEGATIVE );
 }
 
 

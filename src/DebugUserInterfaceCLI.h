@@ -28,6 +28,8 @@
 #include "Literal.h"
 #include "util/Constants.h"
 
+using namespace std;
+
 struct cmd
 {
     UserCommand command;

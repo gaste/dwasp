@@ -320,7 +320,9 @@ DebugInterface::loadHistory(
     const string& filename )
 {
 	string ruleHistory = "", answer;
-	unsigned int query;
+	Var query;
+	vector< Var > queryHistoryLoaded;
+	vector< TruthValue > answerHistoryLoaded;
 
 	ifstream historyFile ( filename );
 
@@ -331,13 +333,24 @@ DebugInterface::loadHistory(
 	{
 		int pos = ruleHistory.find(" ");
 
-		query = atoi( ruleHistory.substr( 0, pos ).c_str() );
+		if ( !VariableNames::getVariable( ruleHistory.substr( 0, pos ), query ) )
+			return false;
+
 		answer = ruleHistory.substr( pos+1, ruleHistory.length() );
 
-		queryHistory.push_back( query );
-		answerHistory.push_back( ( answer == "true" ) ? TRUE : FALSE );
+		if ( answer != "true" && answer != "false" )
+			return false;
+
+		queryHistoryLoaded.push_back( query );
+		answerHistoryLoaded.push_back( ( answer == "true" ) ? TRUE : FALSE );
 	}
 	historyFile.close();
+
+	for ( unsigned int i = 0; i < queryHistoryLoaded.size(); i++ )
+	{
+		queryHistory.push_back( queryHistoryLoaded[i] );
+		answerHistory.push_back( answerHistoryLoaded[i] );
+	}
 
     return true;
 }
@@ -350,7 +363,7 @@ DebugInterface::saveHistory(
 
 	for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
 	{
-		ruleHistory += to_string ( queryHistory[ i ] ) + " " +
+		ruleHistory += VariableNames::getName( queryHistory[ i ] ) + " " +
 					   ( ( answerHistory[ i ] == TRUE ) ? "true" : "false" ) + "\n";
 	}
 

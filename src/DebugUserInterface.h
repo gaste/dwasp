@@ -40,6 +40,7 @@ enum UserCommand
     LOAD_HISTORY,
     ASSERT_VARIABLE,
     ANALYZE_DISJOINT_CORES,
+    UNDO_ASSERTION,
     EXIT
 };
 
@@ -58,6 +59,7 @@ public:
 	virtual string askHistoryFilename() = 0;
 	virtual TruthValue askTruthValue( const Var variable ) = 0;
 	virtual Literal getAssertion() = 0;
+	virtual unsigned int chooseAssertionToUndo( const vector< Var >& queryHistory, const vector< TruthValue >& answerHistory ) = 0;
 	virtual void greetUser() = 0;
 	virtual void informSolving() = 0;
 	virtual void informComputingQueryVariable() = 0;

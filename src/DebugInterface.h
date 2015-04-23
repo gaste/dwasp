@@ -57,7 +57,7 @@ class DebugInterface
         unsigned int determineQueryVariable( const vector< Literal >& unsatCore, map< Var, int >& variableEntropy, const vector< Literal >& relaxedLiterals, unsigned int level );
         vector< Literal > clauseToVector( const Clause& unsatCore );
         void resetSolver();
-        unsigned int computeUnsatCore( const vector< Literal >& assumptions );
+        unsigned int computeUnsatCore( const vector< Literal >& debugAssumptions, const vector< Literal >& assertions );
         bool saveHistory( const string& filename );
         bool loadHistory( const string& filename );
         bool isDebugVariable( const Var variable );
@@ -68,9 +68,10 @@ class DebugInterface
         Solver& solver;
         QuickXPlain coreMinimizer;
         DebugUserInterface* userInterface;
+        vector< Var > facts;
         vector< Literal > debugLiterals;
         vector< Literal > consideredDebugLiterals;
-        vector< Var > facts;
+        vector< Literal > assertions;
         vector< Var > queryHistory;
         vector< TruthValue > answerHistory;
 };

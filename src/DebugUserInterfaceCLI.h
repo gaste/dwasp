@@ -52,6 +52,7 @@ public:
 	string askHistoryFilename();
 	TruthValue askTruthValue( const Var variable );
 	Literal getAssertion();
+	unsigned int chooseAssertionToUndo( const vector< Var >& queryHistory, const vector< TruthValue >& answerHistory );
     void greetUser();
     void informSolving();
     void informComputingQueryVariable();

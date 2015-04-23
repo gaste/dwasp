@@ -20,6 +20,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
+#include <iterator>
 #include <utility>
 
 #include "util/Formatter.h"
@@ -37,6 +39,7 @@ map< string, cmd > DebugUserInterfaceCLI::commandMap =
     { "save history", { SAVE_HISTORY, "Save the assertion history in a file." } },
     { "load history", { LOAD_HISTORY, "Load the assertion history from a file." } },
     { "assert", { ASSERT_VARIABLE, "Assert the truth value of a variable." } },
+    { "undo assert", { UNDO_ASSERTION, "Choose and undo an assertion." } },
     { "fix core", { ANALYZE_DISJOINT_CORES, "Compute all disjoint cores and fix one of them." } },
     { "exit", { EXIT, "Stop the debugging session." } }
 };
@@ -141,7 +144,7 @@ DebugUserInterfaceCLI::printHistory(
 
     for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
     {
-        history += i + ": " + VariableNames::getName( queryHistory[ i ] )
+        history += to_string( i ) + ": " + VariableNames::getName( queryHistory[ i ] )
                 + " = " + ((answerHistory[ i ] == TRUE) ? "true" : "false")
                 + "\n";
     }
@@ -158,7 +161,7 @@ DebugUserInterfaceCLI::askTruthValue(
 	do
 	{
 		cout << "Should '" << VariableNames::getName( variable )
-			 << "' be in the model? (y/n): ";
+			 << "' be in the model? (y/n/u): ";
 
 		getline( cin, userInput );
 
@@ -166,6 +169,7 @@ DebugUserInterfaceCLI::askTruthValue(
 
 		if ( userInput == "y" ) return TRUE;
 		else if ( userInput == "n" ) return FALSE;
+		else if ( userInput == "u" ) return UNDEFINED;
 	} while(true);
 }
 
@@ -209,6 +213,38 @@ DebugUserInterfaceCLI::getAssertion()
     } while ( !inputCorrect );
 
     return Literal( assertionVariable, input == "t" ? POSITIVE : NEGATIVE );
+}
+
+unsigned int
+DebugUserInterfaceCLI::chooseAssertionToUndo(
+    const vector< Var >& queryHistory,
+    const vector< TruthValue >& answerHistory )
+{
+    if ( queryHistory.empty() )
+    {
+        cout << "No assertions available." << endl;
+        return 0;
+    }
+
+    string userInput;
+    unsigned int assertion = queryHistory.size();
+    cout << "Choose an assertion to undo:" << endl;
+    printHistory( queryHistory, answerHistory );
+
+    do
+    {
+        cout << "Assertion (0-" << (queryHistory.size() - 1) << "): ";
+        getline( cin, userInput );
+
+        // check if the input is a number
+        auto iterator = userInput.begin();
+        while ( iterator != userInput.end() && isdigit( *iterator ) ) ++iterator;
+
+        if ( !userInput.empty() && iterator == userInput.end() )
+            assertion = atoi( userInput.c_str() );
+    } while ( assertion >= queryHistory.size() );
+
+    return assertion;
 }
 
 void

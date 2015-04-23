@@ -37,14 +37,12 @@ vector< Literal >
 DebugInterface::clauseToVector(
     const Clause& clause )
 {
-	vector< Literal > debugLiterals;
+	vector< Literal > literals;
 
 	for (unsigned int i = 0; i < clause.size(); i++)
-	{
-		debugLiterals.push_back(clause[i]);
-	}
+		literals.push_back(clause[i]);
 
-	return debugLiterals;
+	return literals;
 }
 
 bool
@@ -58,6 +56,13 @@ DebugInterface::isDebugVariable(
     return false;
 }
 
+bool
+DebugInterface::isFact(
+    const Var variable )
+{
+    return find( facts.begin(), facts.end(), variable ) != facts.end();
+}
+
 void
 DebugInterface::debug()
 {
@@ -68,15 +73,28 @@ DebugInterface::debug()
     userInterface->greetUser();
     userInterface->informSolving();
 
-    if ( computeUnsatCore( debugLiterals ) != INCOHERENT )
+    if ( computeUnsatCore( consideredDebugLiterals ) != INCOHERENT )
     {
         ErrorMessage::errorGeneric( "Program not INCOHERENT" );
         return;
     }
 
+
+    trace_msg( debug, 1, "Determining facts" );
+
     resetSolver();
 
-    assert( solver.getUnsatCore() != NULL );    
+    for( Var variable = 1; variable <= solver.numberOfVariables(); variable++ )
+    {
+        if ( !solver.isUndefined( variable ) )
+        {
+            trace_msg( debug, 2, "Fact: " << VariableNames::getName( variable ) << " = " << ( solver.isTrue( variable ) ? "true" : "false" ));
+            facts.push_back( variable );
+        }
+    }
+
+    assert( solver.getUnsatCore() != NULL );
+
     vector< Literal > minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
     
     do
@@ -95,6 +113,14 @@ DebugInterface::debug()
         case SHOW_HISTORY:
             userInterface->printHistory( queryHistory, answerHistory );
             break;
+        case ANALYZE_DISJOINT_CORES:
+        {
+            userInterface->informSolving();
+            vector< vector< Literal > > cores = computeDisjointCores();
+            fixCore( cores );
+            userInterface->informAnalyzedDisjointCores( cores.size() );
+            break;
+        }
         case SAVE_HISTORY:
         {
             string filename = userInterface->askHistoryFilename();
@@ -120,7 +146,7 @@ DebugInterface::debug()
 
                 userInterface->informLoadedHistory( filename );
                 userInterface->informSolving();
-                if ( computeUnsatCore( debugLiterals ) == INCOHERENT )
+                if ( computeUnsatCore( consideredDebugLiterals ) == INCOHERENT )
                 {
                     resetSolver();
                     assert( solver.getUnsatCore() != NULL );
@@ -151,7 +177,7 @@ DebugInterface::debug()
 
             userInterface->informSolving();
 
-            if ( computeUnsatCore( debugLiterals ) == INCOHERENT )
+            if ( computeUnsatCore( consideredDebugLiterals ) == INCOHERENT )
             {
                 resetSolver();
                 assert( solver.getUnsatCore() != NULL );
@@ -180,7 +206,7 @@ DebugInterface::debug()
 
             userInterface->informSolving();
 
-            if ( computeUnsatCore( debugLiterals ) == INCOHERENT )
+            if ( computeUnsatCore( consideredDebugLiterals ) == INCOHERENT )
             {
                 resetSolver();
                 assert( solver.getUnsatCore() != NULL );
@@ -256,6 +282,52 @@ DebugInterface::readDebugMapping(
     } while ( !doneParsing );
 }
 
+vector< vector< Literal > >
+DebugInterface::computeDisjointCores()
+{
+    vector< Literal > reducedAssumptions( debugLiterals );
+    vector< vector< Literal > > cores;
+
+    trace_msg( debug, 1, "Computing disjoint cores" );
+
+    unsigned int solverResult = computeUnsatCore( reducedAssumptions );
+    resetSolver();
+
+    while ( solverResult == INCOHERENT )
+    {
+        vector< Literal > core = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ), 3 );
+        cores.push_back( core );
+
+        trace_msg( debug, 2, "Found core: " << Formatter::formatClause( core ) );
+
+        for ( const Literal& coreLiteral : core )
+        {
+            reducedAssumptions.erase( std::remove( reducedAssumptions.begin(), reducedAssumptions.end(), Literal( coreLiteral.getVariable(), POSITIVE) ), reducedAssumptions.end() );
+        }
+
+        solverResult = computeUnsatCore( reducedAssumptions );
+        resetSolver();
+    }
+
+    return cores;
+}
+
+vector< Literal >
+DebugInterface::fixCore(
+    const vector< vector< Literal > >& cores )
+{
+    // fix the first core
+    for ( auto iterator = cores.begin() + 1; iterator != cores.end(); iterator ++ )
+    {
+        for ( const Literal& literal : *iterator )
+        {
+            consideredDebugLiterals.erase( remove( consideredDebugLiterals.begin(), consideredDebugLiterals.end(), Literal( literal.getVariable() ) ), consideredDebugLiterals.end() );
+        }
+    }
+
+    return cores[ 0 ];
+}
+
 void
 DebugInterface::resetSolver()
 {
@@ -284,7 +356,7 @@ DebugInterface::determineQueryVariable(
     Var queryVariable = unsatCore[ 0 ].getVariable();
     map< Var, int > variableEntropy;
 
-    unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, debugLiterals, 1 );
+    unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, consideredDebugLiterals, 1 );
     unsigned int lowestEntropy = numModels + 1;
 
     for ( auto const& pair : variableEntropy )
@@ -292,9 +364,10 @@ DebugInterface::determineQueryVariable(
         Var variable = pair.first;
         unsigned int entropy = abs( pair.second );
 
-        if ( entropy < lowestEntropy &&
-             find( queryHistory.begin(), queryHistory.end(), variable ) == queryHistory.end() &&
-             !isDebugVariable( variable ) )
+        if ( entropy < lowestEntropy
+             && find( queryHistory.begin(), queryHistory.end(), variable ) == queryHistory.end()
+             && !isDebugVariable( variable )
+             && !isFact( variable ) )
         {
             queryVariable = variable;
             lowestEntropy = entropy;

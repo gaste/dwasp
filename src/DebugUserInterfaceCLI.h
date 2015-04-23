@@ -59,6 +59,7 @@ public:
     void informLoadedHistory( const string& filename );
     void informCouldNotSaveHistory( const string& filename );
     void informCouldNotLoadHistory( const string& filename );
+    void informAnalyzedDisjointCores( const unsigned int numCores );
 
 private:
 	inline void promptInput(string& input) { cout << "WDB> "; getline(cin, input); }

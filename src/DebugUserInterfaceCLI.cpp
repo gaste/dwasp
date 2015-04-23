@@ -37,6 +37,7 @@ map< string, cmd > DebugUserInterfaceCLI::commandMap =
     { "save history", { SAVE_HISTORY, "Save the assertion history in a file." } },
     { "load history", { LOAD_HISTORY, "Load the assertion history from a file." } },
     { "assert", { ASSERT_VARIABLE, "Assert the truth value of a variable." } },
+    { "fix core", { ANALYZE_DISJOINT_CORES, "Compute all disjoint cores and fix one of them." } },
     { "exit", { EXIT, "Stop the debugging session." } }
 };
 
@@ -208,6 +209,20 @@ DebugUserInterfaceCLI::getAssertion()
     } while ( !inputCorrect );
 
     return Literal( assertionVariable, input == "t" ? POSITIVE : NEGATIVE );
+}
+
+void
+DebugUserInterfaceCLI::informAnalyzedDisjointCores(
+    const unsigned int numCores )
+{
+    if ( numCores == 1 )
+    {
+        cout << "There is only one core." << endl;
+    }
+    else
+    {
+        cout << "Found " << numCores << " cores and fixed one of them." << endl;
+    }
 }
 
 

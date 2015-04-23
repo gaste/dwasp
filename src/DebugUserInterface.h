@@ -39,6 +39,7 @@ enum UserCommand
     SAVE_HISTORY,
     LOAD_HISTORY,
     ASSERT_VARIABLE,
+    ANALYZE_DISJOINT_CORES,
     EXIT
 };
 
@@ -64,6 +65,7 @@ public:
 	virtual void informLoadedHistory( const string& filename ) = 0;
 	virtual void informCouldNotSaveHistory( const string& filename ) = 0;
 	virtual void informCouldNotLoadHistory( const string& filename ) = 0;
+	virtual void informAnalyzedDisjointCores( const unsigned int numCores ) = 0;
 };
 
 inline DebugUserInterface::~DebugUserInterface() { }

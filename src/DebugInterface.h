@@ -47,7 +47,7 @@ class DebugInterface
 {    
 	public:
         inline DebugInterface( Solver& s ) : solver( s ), coreMinimizer( s ), userInterface( new DebugUserInterfaceCLI() ) {}
-        void addDebugLiteral( Literal l ) { debugLiterals.push_back( l ); }
+        void addDebugLiteral( Literal l ) { debugLiterals.push_back( l ); consideredDebugLiterals.push_back( l ); }
         void readDebugMapping( Istream& stream );
         void debug();
 
@@ -61,11 +61,16 @@ class DebugInterface
         bool saveHistory( const string& filename );
         bool loadHistory( const string& filename );
         bool isDebugVariable( const Var variable );
+        bool isFact( const Var variable );
+        vector< vector< Literal > > computeDisjointCores();
+        vector< Literal > fixCore( const vector< vector< Literal > >& cores );
 
         Solver& solver;
         QuickXPlain coreMinimizer;
         DebugUserInterface* userInterface;
         vector< Literal > debugLiterals;
+        vector< Literal > consideredDebugLiterals;
+        vector< Var > facts;
         vector< Var > queryHistory;
         vector< TruthValue > answerHistory;
 };

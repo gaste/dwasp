@@ -18,13 +18,18 @@
 
 #include "RuleNames.h"
 
+#include <iostream>
+#include <utility>
+#include <regex>
+
 #include "Assert.h"
 
 map< string, string > RuleNames::ruleMap;
 map< string, vector< string > > RuleNames::variablesMap;
 
 const string&
-RuleNames::getRule( string debugAtom )
+RuleNames::getRule(
+    const string& debugAtom )
 {
     unsigned int parenthesisIndex = debugAtom.find( '(' );
 
@@ -39,25 +44,39 @@ RuleNames::getRule( string debugAtom )
 }
 
 string
-RuleNames::getSubstitution( string debugAtom )
+RuleNames::getGroundRule(
+    const string& debugAtom )
+{
+    string rule = getRule( debugAtom );
+    map< string, string > substitution = getSubstitutionMap( debugAtom );
+
+    for ( const auto& pair : substitution )
+    {
+        regex variableRegex( "([,;( ])" + pair.first + "(?=[,;) ])" );
+        rule = regex_replace( rule, variableRegex, "$1@" + pair.first + "@" );
+        regex variableRegex2( "@" + pair.first + "@" );
+        rule = regex_replace( rule, variableRegex2, pair.second );
+    }
+
+    return rule;
+}
+
+string
+RuleNames::getSubstitution(
+    const string& debugAtom )
 {
     string substitution = "";
-    unsigned int parenthesisIndex = debugAtom.find( '(' );
+    map< string, string > substitutionMap = getSubstitutionMap( debugAtom );
 
-    if ( parenthesisIndex != string::npos )
+    if ( substitutionMap.size() > 0 )
     {
-        string debugConstant = debugAtom.substr( 0, parenthesisIndex );
-        string term = debugAtom.substr( parenthesisIndex + 1, debugAtom.length() - parenthesisIndex - 2);
-        vector< string > terms = getTerms( term );
-        vector< string > variables = variablesMap[ debugConstant ];
-
-        assert_msg( terms.size() == variables.size(), "#terms to be substituted is different from #variables" );
-
         substitution = "{ ";
-        substitution += variables[0] + "/" + terms[ 0 ];
-        for ( unsigned int i = 1; i < terms.size(); i++ )
+        auto iterator = substitutionMap.begin();
+        substitution += iterator->first + "/" + iterator->second;
+
+        for ( iterator ++; iterator != substitutionMap.end(); iterator ++ )
         {
-            substitution += ", " + variables[i] + "/" + terms[ i ];
+            substitution += ", " + iterator->first + "/" + iterator->second;
         }
         substitution += " }";
     }
@@ -65,15 +84,45 @@ RuleNames::getSubstitution( string debugAtom )
     return substitution;
 }
 
+map< string, string >
+RuleNames::getSubstitutionMap(
+    const string& debugAtom )
+{
+    map< string, string > substitution;
+
+    if ( debugAtom.find( '(' ) != string::npos )
+    {
+        std::size_t parenthesisIndex = debugAtom.find( '(' );
+        string debugConstant = debugAtom.substr( 0, parenthesisIndex );
+        string term = debugAtom.substr( parenthesisIndex + 1, debugAtom.length() - parenthesisIndex - 2);
+
+        vector< string > terms = getTerms( term );
+        vector< string > variables = variablesMap[ debugConstant ];
+
+        assert_msg( terms.size() == variables.size(), "#terms to be substituted is different from #variables" );
+
+        for ( unsigned int i = 0; i < terms.size(); i++ )
+        {
+            substitution[ variables[ i ] ] = terms[ i ];
+        }
+    }
+
+    return substitution;
+}
+
 void
-RuleNames::addRule( string debugAtom, string rule, vector< string > variables )
+RuleNames::addRule(
+    string debugAtom,
+    string rule,
+    vector< string > variables )
 {
     ruleMap[ debugAtom ] = rule;
     variablesMap[ debugAtom ] = variables;
 }
 
 vector< string >
-RuleNames::getTerms( string term )
+RuleNames::getTerms(
+    const string& term )
 {
     int openBrackets = 0;
     vector< string > terms;
@@ -100,7 +149,8 @@ RuleNames::getTerms( string term )
         }
     }
 
-    terms.push_back( currentTerm );
+    if ( term.length() > 0 )
+        terms.push_back( currentTerm );
 
     return terms;
 }

@@ -29,8 +29,8 @@ using namespace std;
 class Formatter
 {
     public:
-        static string formatLiteral( Literal literal );
-        static string formatClause( vector< Literal > clause );
+        static string formatLiteral( const Literal& literal );
+        static string formatClause( const vector< Literal >& clause );
 };
 
 #endif /* FORMATTER_H */

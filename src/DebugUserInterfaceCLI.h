@@ -20,12 +20,19 @@
 #define DEBUGUSERINTERFACECLI_H
 
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 
 #include "DebugUserInterface.h"
 #include "Literal.h"
 #include "util/Constants.h"
+
+struct cmd
+{
+    UserCommand command;
+    string helpText;
+};
 
 /**
  * CLI implementation of the debug user interface.
@@ -52,7 +59,9 @@ public:
     void informCouldNotLoadHistory( const string& filename );
 
 private:
-	inline void promptInput (string& input) { cout << endl << "WDB> "; getline(cin, input); }
+	inline void promptInput(string& input) { cout << "WDB> "; getline(cin, input); }
+	void printHelp();
+	static map< string, cmd > commandMap;
 };
 
 #endif /* DEBUGUSERINTERFACECLI_H */

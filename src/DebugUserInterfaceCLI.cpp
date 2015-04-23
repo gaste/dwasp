@@ -18,8 +18,24 @@
 
 #include "DebugUserInterfaceCLI.h"
 
+#include <utility>
+
+#include "util/Formatter.h"
 #include "util/RuleNames.h"
 #include "util/VariableNames.h"
+
+map< string, cmd > DebugUserInterfaceCLI::commandMap =
+{
+    { "show core", { SHOW_CORE, "Show the literals inside the UNSAT core." } },
+    { "show core ground", { SHOW_CORE_GROUND_RULES, "Show the ground rules inside the UNSAT core." } },
+    { "show core unground", { SHOW_CORE_NONGROUND_RULES, "Show the unground rules inside the UNSAT core." } },
+    { "show history", { SHOW_HISTORY, "Show the history of assertions." } },
+    { "ask", { ASK_QUERY, "Ask me a question about the program." } },
+    { "save history", { SAVE_HISTORY, "Save the assertion history in a file." } },
+    { "load history", { LOAD_HISTORY, "Load the assertion history from a file." } },
+    { "assert", { ASSERT_VARIABLE, "Assert the truth value of a variable." } },
+    { "exit", { EXIT, "Stop the debugging session." } }
+};
 
 UserCommand
 DebugUserInterfaceCLI::promptCommand()
@@ -30,59 +46,78 @@ DebugUserInterfaceCLI::promptCommand()
 	{
 		promptInput(userInput);
 
-		if( userInput == "print" )
+		if ( userInput == "help" )
 		{
-			return SHOW_CORE;
+		    printHelp();
 		}
-		else if( userInput == "history" )
+		else if ( commandMap.count( userInput ) )
 		{
-		    return SHOW_HISTORY;
+		    return commandMap[ userInput ].command;
 		}
-		else if( userInput == "ask" )
-		{
-			return ASK_QUERY;
-		}
-		else if( userInput == "exit" )
-        {
-            return EXIT;
-        }
 		else
 		{
-			cout << "Invalid command. Available commands:" << endl
-				 << "    print: show the UNSAT core" << endl
-				 << "    history: show the debug history" << endl
-				 << "    ask: ask me a query" << endl
-				 << "    exit: stop the debugging session";
+		    cout << "Undefined command: \"" + userInput + "\".  Try \"help\"." << endl;
 		}
 	} while(true);
+}
+
+void
+DebugUserInterfaceCLI::printHelp()
+{
+    cout << "Available commands:" << endl << endl;
+
+    for ( const auto& pair : commandMap )
+    {
+        cout << pair.first << " -- " << pair.second.helpText << endl;
+    }
 }
 
 void
 DebugUserInterfaceCLI::printCore(
     const vector< Literal >& core )
 {
-    if ( !core.empty() )
-    {
-        for ( unsigned int i = 0; i < core.size(); i++ )
-        {
-            cout << RuleNames::getRule( VariableNames::getName( core[i].getVariable() ) ) << " "
-                 << RuleNames::getSubstitution( VariableNames::getName( core[i].getVariable() ) ) << endl ;
-        }
-    }
+    cout << Formatter::formatClause( core ) << endl;
 }
 
 void
 DebugUserInterfaceCLI::printCoreGroundRules(
     const vector< Literal >& core )
 {
-
+    if ( !core.empty() )
+    {
+        for ( const Literal& coreLiteral : core )
+        {
+            cout << RuleNames::getGroundRule( coreLiteral ) << endl;
+        }
+    }
 }
 
 void
 DebugUserInterfaceCLI::printCoreUngroundRules(
     const vector< Literal >& core )
 {
+    map< string, vector< string > > ruleSubstitutionMap;
 
+    for( const Literal& coreLiteral : core )
+    {
+        string rule = RuleNames::getRule( coreLiteral.getVariable() );
+        string substitution = RuleNames::getSubstitution( coreLiteral.getVariable() );
+
+        if ( substitution.length() > 0 )
+            ruleSubstitutionMap[ rule ].push_back( substitution );
+        else
+            ruleSubstitutionMap[ rule ];
+    }
+
+    for ( const auto& mapEntry : ruleSubstitutionMap )
+    {
+        cout << mapEntry.first << endl;
+
+        for ( const string& substitution : mapEntry.second )
+        {
+            cout << "    " << substitution << endl;
+        }
+    }
 }
 
 void
@@ -107,7 +142,7 @@ DebugUserInterfaceCLI::askTruthValue(
 	do
 	{
 		cout << "Should '" << VariableNames::getName( variable )
-			 << "' be in the model? (y/n)";
+			 << "' be in the model? (y/n)" << endl;
 
 		promptInput(userInput);
 
@@ -119,7 +154,10 @@ DebugUserInterfaceCLI::askTruthValue(
 string
 DebugUserInterfaceCLI::askHistoryFilename()
 {
-    return "";
+    string filename;
+    cout << "Filename: ";
+    cin >> filename;
+    return filename;
 }
 
 Literal
@@ -132,45 +170,45 @@ DebugUserInterfaceCLI::getAssertion()
 void
 DebugUserInterfaceCLI::greetUser()
 {
-
+    cout << "WASP debbuging mode" << endl;
 }
 
 void
 DebugUserInterfaceCLI::informSolving()
 {
-
+    cout << "Computing the unsatisfiable core" << endl;
 }
 
 void
 DebugUserInterfaceCLI::informComputingQueryVariable()
 {
-
+    cout << "Computing the query" << endl;
 }
 
 void
 DebugUserInterfaceCLI::informSavedHistory(
     const string& filename )
 {
-
+    cout << "Saved history to '" << filename << "'" << endl;
 }
 
 void
 DebugUserInterfaceCLI::informLoadedHistory(
     const string& filename )
 {
-
+    cout << "Loaded history from '" << filename << "'" << endl;
 }
 
 void
 DebugUserInterfaceCLI::informCouldNotSaveHistory(
     const string& filename )
 {
-
+    cout << "Unable to save the history to the file '" << filename << "'" << endl;
 }
 
 void
 DebugUserInterfaceCLI::informCouldNotLoadHistory(
     const string& filename )
 {
-
+    cout << "Unable to load the history from the file '" << filename << "'" << endl;
 }

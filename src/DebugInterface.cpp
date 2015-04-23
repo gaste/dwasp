@@ -20,20 +20,18 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cmath>
+#include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <string>
 #include <utility>
-#include <fstream>
-#include <iostream>
 
 #include "Solver.h"
 #include "util/ErrorMessage.h"
 #include "util/Formatter.h"
 #include "util/RuleNames.h"
 #include "util/Trace.h"
-#include "util/VariableNames.h"
 
 vector< Literal >
 DebugInterface::clauseToVector(
@@ -76,6 +74,8 @@ DebugInterface::debug()
         return;
     }
 
+    resetSolver();
+
     assert( solver.getUnsatCore() != NULL );    
     vector< Literal > minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
     
@@ -107,19 +107,62 @@ DebugInterface::debug()
         }
         case LOAD_HISTORY:
         {
+            unsigned int historyPoint = queryHistory.size();
             string filename = userInterface->askHistoryFilename();
 
             if ( loadHistory( filename ) )
+            {
+                // replay the history
+                for ( unsigned int i = historyPoint; i < queryHistory.size(); i ++ )
+                {
+                    solver.addClause( Literal( queryHistory[ i ], answerHistory[ i ] == TRUE ? POSITIVE : NEGATIVE ) );
+                }
+
                 userInterface->informLoadedHistory( filename );
+                userInterface->informSolving();
+                if ( computeUnsatCore( debugLiterals ) == INCOHERENT )
+                {
+                    resetSolver();
+                    assert( solver.getUnsatCore() != NULL );
+                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore(
+                            clauseToVector( *solver.getUnsatCore() ) );
+                }
+                else
+                {
+                    cout << "Found answer set";
+                    solver.printAnswerSet();
+                    continueDebugging = false;
+                }
+            }
             else
+            {
                 userInterface->informCouldNotLoadHistory( filename );
+            }
 
             break;
         }
         case ASSERT_VARIABLE:
         {
             Literal assertion = userInterface->getAssertion();
-            //TODO implement adding the user's assertion
+            queryHistory.push_back( assertion.getVariable() );
+            answerHistory.push_back( assertion.getSign() == POSITIVE ? POSITIVE : NEGATIVE );
+
+            solver.addClause( assertion );
+
+            userInterface->informSolving();
+
+            if ( computeUnsatCore( debugLiterals ) == INCOHERENT )
+            {
+                resetSolver();
+                assert( solver.getUnsatCore() != NULL );
+                minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
+            }
+            else
+            {
+                cout << "Found answer set";
+                solver.printAnswerSet();
+                continueDebugging = false;
+            }
             break;
         }
         case ASK_QUERY:
@@ -139,6 +182,7 @@ DebugInterface::debug()
 
             if ( computeUnsatCore( debugLiterals ) == INCOHERENT )
             {
+                resetSolver();
                 assert( solver.getUnsatCore() != NULL );
                 minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
             }
@@ -212,6 +256,13 @@ DebugInterface::readDebugMapping(
     } while ( !doneParsing );
 }
 
+void
+DebugInterface::resetSolver()
+{
+    solver.unrollToZero();
+    solver.clearConflictStatus();
+}
+
 unsigned int
 DebugInterface::computeUnsatCore(
     const vector< Literal >& assumptions )
@@ -223,12 +274,7 @@ DebugInterface::computeUnsatCore(
     solver.setMinimizeUnsatCore( true );
     solver.setComputeMinimalUnsatCore( false );
 
-    unsigned int result = solver.solve( assumptionsAND, assumptionsOR );
-
-    solver.unrollToZero();
-    solver.clearConflictStatus();
-
-    return result;
+    return solver.solve( assumptionsAND, assumptionsOR );
 }
 
 Var
@@ -241,7 +287,7 @@ DebugInterface::determineQueryVariable(
     unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, debugLiterals, 1 );
     unsigned int lowestEntropy = numModels + 1;
 
-    for ( pair< Var, unsigned int > pair : variableEntropy )
+    for ( auto const& pair : variableEntropy )
     {
         Var variable = pair.first;
         unsigned int entropy = abs( pair.second );
@@ -288,25 +334,22 @@ DebugInterface::determineQueryVariable(
             numModels ++;
             trace_msg( debug, level, "Model found after relaxing " << Formatter::formatLiteral( relaxLiteral ) );
 
-            unsigned int numAssignedVariables = solver.numberOfAssignedLiterals();
-
-            for( unsigned int i = 1; i <= solver.numberOfVariables(); i++ )
+            for( Var variable = 1; variable <= solver.numberOfVariables(); variable++ )
             {
-                Var variable = i;
-                bool isTrue = solver.isTrue( variable );
-
                 if ( variableEntropy.count( variable ) == 0 )
                 {
-                    variableEntropy[ variable ] = (isTrue ? 1 : -1);
+                    variableEntropy[ variable ] = solver.isTrue( variable ) ? 1 : -1;
                 }
                 else
                 {
-                    variableEntropy[ variable ] += (isTrue ? 1 : -1);
+                    variableEntropy[ variable ] += solver.isTrue( variable ) ? 1 : -1;
                 }
             }
+            resetSolver();
         }
         else
         {
+            resetSolver();
             vector< Literal > relaxedUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ), level + 1 );
             numModels += determineQueryVariable( relaxedUnsatCore, variableEntropy, relaxedAssumptions, level + 1 );
         }

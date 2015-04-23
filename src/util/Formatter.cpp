@@ -22,14 +22,14 @@
 
 string
 Formatter::formatLiteral(
-    Literal literal )
+    const Literal& literal )
 {
     return (literal.isNegative() ? "-" : "") + VariableNames::getName( literal.getVariable() );
 }
 
 string
 Formatter::formatClause(
-    vector< Literal > clause )
+    const vector< Literal >& clause )
 {
     string formatted( "{ " );
 

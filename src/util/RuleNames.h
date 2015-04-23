@@ -23,17 +23,30 @@
 #include <string>
 #include <vector>
 
+#include "../Literal.h"
+#include "VariableNames.h"
+
 using namespace std;
 
 class RuleNames
 {
     public:
         static void addRule( string debugAtom, string rule, vector< string > variables );
-        static const string& getRule( string debugAtom );
-        static string getSubstitution( string debugAtom );
+        static const string& getRule( const Literal& debugLiteral ) { return getRule( debugLiteral.getVariable() ); }
+        static const string& getRule( const Var debugVariable ) { return getRule( VariableNames::getName( debugVariable ) ); }
+        static const string& getRule( const string& debugAtom );
+        static string getGroundRule( const Literal& debugLiteral ) { return getGroundRule( debugLiteral.getVariable() ); }
+        static string getGroundRule( const Var debugVariable ) { return getGroundRule( VariableNames::getName( debugVariable ) ); }
+        static string getGroundRule( const string& debugAtom );
+        static string getSubstitution( const Literal& debugLiteral ) { return getSubstitution( debugLiteral.getVariable() ); };
+        static string getSubstitution( const Var debugVariable ) { return getSubstitution( VariableNames::getName( debugVariable ) ); };
+        static string getSubstitution( const string& debugAtom );
+        static map< string, string > getSubstitutionMap( const Literal& debugLiteral ) { return getSubstitutionMap( debugLiteral.getVariable() ); }
+        static map< string, string > getSubstitutionMap( const Var debugVariable ) { return getSubstitutionMap( VariableNames::getName( debugVariable ) ); }
+        static map< string, string > getSubstitutionMap( const string& debugAtom );
 
     private:
-        static vector< string > getTerms( string term );
+        static vector< string > getTerms( const string& term );
         static map< string, string > ruleMap;
         static map< string, vector< string > > variablesMap;
 };

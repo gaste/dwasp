@@ -29,16 +29,17 @@ using namespace std;
 /**
  * Commands available to the user
  */
-enum UserCommand {
-	SHOW_CORE,
-	SHOW_CORE_GROUND_RULES,
-	SHOW_CORE_NONGROUND_RULES,
-	SHOW_HISTORY,
+enum UserCommand
+{
+    SHOW_CORE,
+    SHOW_CORE_GROUND_RULES,
+    SHOW_CORE_NONGROUND_RULES,
+    SHOW_HISTORY,
     ASK_QUERY,
     SAVE_HISTORY,
     LOAD_HISTORY,
     ASSERT_VARIABLE,
-	EXIT
+    EXIT
 };
 
 /**

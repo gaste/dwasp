@@ -34,24 +34,13 @@
 #include "util/Trace.h"
 #include "util/VariableNames.h"
 
-vector< Literal >
-DebugInterface::clauseToVector(
-    const Clause& clause )
-{
-	vector< Literal > literals;
-
-	for (unsigned int i = 0; i < clause.size(); i++)
-		literals.push_back(clause[i]);
-
-	return literals;
-}
-
 bool
-DebugInterface::isDebugVariable(
-    const Var variable )
+DebugInterface::isVariableContainedInLiterals(
+    const Var variable,
+    const vector< Literal >& literals )
 {
-    for ( Literal debugLiteral : debugLiterals )
-        if ( debugLiteral.getVariable() == variable )
+    for ( const Literal& literal : literals )
+        if ( literal.getVariable() == variable )
             return true;
 
     return false;
@@ -64,6 +53,23 @@ DebugInterface::isFact(
     return find( facts.begin(), facts.end(), variable ) != facts.end();
 }
 
+vector< Literal >
+DebugInterface::getCoreWithoutAssertions(
+    const vector< Literal >& unsatCore )
+{
+    vector< Literal > coreWithoutAssertions;
+
+    for ( const Literal& coreLiteral : unsatCore )
+    {
+        if ( !isVariableContainedInLiterals( coreLiteral.getVariable(), assertions ) )
+        {
+            coreWithoutAssertions.push_back( coreLiteral );
+        }
+    }
+
+    return coreWithoutAssertions;
+}
+
 void
 DebugInterface::debug()
 {
@@ -74,7 +80,7 @@ DebugInterface::debug()
     userInterface->greetUser();
     userInterface->informSolving();
 
-    if ( computeUnsatCore( consideredDebugLiterals, assertions ) != INCOHERENT )
+    if ( runSolver( consideredDebugLiterals, assertions ) != INCOHERENT )
     {
         ErrorMessage::errorGeneric( "Program not INCOHERENT" );
         return;
@@ -96,62 +102,29 @@ DebugInterface::debug()
 
     assert( solver.getUnsatCore() != NULL );
 
-    vector< Literal > minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
+    vector< Literal > minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
     
     do
     {
         switch (userInterface->promptCommand())
         {
         case SHOW_CORE:
-        {
-            vector< Literal > rulesOnlyCore;
-            for ( const Literal& assertion : minimalUnsatCore )
-            {
-                if ( find( assertions.begin(), assertions.end(), Literal( assertion.getVariable(), POSITIVE ) ) == assertions.end()
-                        && find( assertions.begin(), assertions.end(), Literal( assertion.getVariable(), NEGATIVE ) ) == assertions.end() )
-                {
-                    rulesOnlyCore.push_back( assertion );
-                }
-            }
-            userInterface->printCore( rulesOnlyCore );
+            userInterface->printCore( getCoreWithoutAssertions( minimalUnsatCore ) );
             break;
-        }
         case SHOW_CORE_GROUND_RULES:
-        {
-            vector< Literal > rulesOnlyCore;
-            for ( const Literal& assertion : minimalUnsatCore )
-            {
-                if ( find( assertions.begin(), assertions.end(), Literal( assertion.getVariable(), POSITIVE ) ) == assertions.end()
-                        && find( assertions.begin(), assertions.end(), Literal( assertion.getVariable(), NEGATIVE ) ) == assertions.end() )
-                {
-                    rulesOnlyCore.push_back( assertion );
-                }
-            }
-            userInterface->printCoreGroundRules( rulesOnlyCore );
+            userInterface->printCoreGroundRules( getCoreWithoutAssertions( minimalUnsatCore ) );
             break;
-        }
         case SHOW_CORE_NONGROUND_RULES:
-        {
-            vector< Literal > rulesOnlyCore;
-            for ( const Literal& assertion : minimalUnsatCore )
-            {
-                if ( find( assertions.begin(), assertions.end(), Literal( assertion.getVariable(), POSITIVE ) ) == assertions.end()
-                        && find( assertions.begin(), assertions.end(), Literal( assertion.getVariable(), NEGATIVE ) ) == assertions.end() )
-                {
-                    rulesOnlyCore.push_back( assertion );
-                }
-            }
-            userInterface->printCoreUngroundRules( rulesOnlyCore );
+            userInterface->printCoreUngroundRules( getCoreWithoutAssertions( minimalUnsatCore ) );
             break;
-        }
         case SHOW_HISTORY:
-            userInterface->printHistory( queryHistory, answerHistory );
+            userInterface->printHistory( assertions );
             break;
         case ANALYZE_DISJOINT_CORES:
         {
             userInterface->informSolving();
             vector< vector< Literal > > cores = computeDisjointCores();
-            fixCore( cores );
+            minimalUnsatCore = fixCore( cores );
             userInterface->informAnalyzedDisjointCores( cores.size() );
             break;
         }
@@ -167,24 +140,17 @@ DebugInterface::debug()
         }
         case LOAD_HISTORY:
         {
-            unsigned int historyPoint = queryHistory.size();
             string filename = userInterface->askHistoryFilename();
 
             if ( loadHistory( filename ) )
             {
-                // replay the history
-                for ( unsigned int i = historyPoint; i < queryHistory.size(); i ++ )
-                {
-                    assertions.push_back( Literal( queryHistory[ i ], answerHistory[ i ] == TRUE ? POSITIVE : NEGATIVE ) );
-                }
-
                 userInterface->informLoadedHistory( filename );
                 userInterface->informSolving();
-                if ( computeUnsatCore( consideredDebugLiterals, assertions ) == INCOHERENT )
+                if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
                 {
                     resetSolver();
                     assert( solver.getUnsatCore() != NULL );
-                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
+                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
                 }
                 else
                 {
@@ -204,34 +170,20 @@ DebugInterface::debug()
         {
             Literal assertion = userInterface->getAssertion();
             assertions.push_back( assertion );
-            queryHistory.push_back( assertion.getVariable() );
-            answerHistory.push_back( assertion.getSign() == POSITIVE ? POSITIVE : NEGATIVE );
 
             userInterface->informSolving();
 
-            if ( computeUnsatCore( consideredDebugLiterals, assertions ) == INCOHERENT )
+            if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
             {
                 resetSolver();
                 assert( solver.getUnsatCore() != NULL );
-                minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
+                minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
             }
             else
             {
                 cout << "Found answer set";
                 solver.printAnswerSet();
                 continueDebugging = false;
-            }
-            break;
-        }
-        case UNDO_ASSERTION:
-        {
-            unsigned int undo = userInterface->chooseAssertionToUndo( queryHistory, answerHistory );
-
-            if ( queryHistory.size() > 0 )
-            {
-                queryHistory.erase( queryHistory.begin() + undo );
-                answerHistory.erase( answerHistory.begin() + undo );
-                assertions.erase( assertions.begin() + undo );
             }
             break;
         }
@@ -245,18 +197,38 @@ DebugInterface::debug()
             {
                 resetSolver();
                 Literal assertion( queryVariable, queryVariableTruthValue == TRUE ? POSITIVE : NEGATIVE );
-
-                queryHistory.push_back( queryVariable );
-                answerHistory.push_back( queryVariableTruthValue );
                 assertions.push_back( assertion );
 
                 userInterface->informSolving();
 
-                if ( computeUnsatCore( consideredDebugLiterals, assertions ) == INCOHERENT )
+                if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
                 {
                     resetSolver();
                     assert( solver.getUnsatCore() != NULL );
-                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ) );
+                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
+                }
+                else
+                {
+                    cout << "Found answer set";
+                    solver.printAnswerSet();
+                    continueDebugging = false;
+                }
+            }
+            break;
+        }
+        case UNDO_ASSERTION:
+        {
+            unsigned int undo = userInterface->chooseAssertionToUndo( assertions );
+
+            if ( undo < assertions.size() )
+            {
+                assertions.erase( assertions.begin() + undo );
+
+                if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
+                {
+                    resetSolver();
+                    assert( solver.getUnsatCore() != NULL );
+                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
                 }
                 else
                 {
@@ -280,7 +252,7 @@ void
 DebugInterface::readDebugMapping(
     Istream& stream )
 {
-    bool doneParsing = 0;
+    bool doneParsing = false;
     trace_msg( debug, 1, "Parsing debug mapping table" );
 
     do
@@ -290,12 +262,12 @@ DebugInterface::readDebugMapping(
 
         if ( type == DEBUG_MAP_LINE_SEPARATOR )
         {
-            doneParsing = 1;
+            doneParsing = true;
         }
         else if ( type == DEBUG_MAP_ENTRY )
         {
             // format: DEBUG_MAP_ENTRY debugConstant #variables variables rule
-            string debugConstant, rule, word;
+            string debugConstant;
             unsigned int numVars = 0;
             vector< string > variables;
 
@@ -309,7 +281,7 @@ DebugInterface::readDebugMapping(
                 variables.push_back( var );
             }
 
-            // read the ungrounded rule
+            string rule, word;
             do
             {
                 stream.read( word );
@@ -317,7 +289,7 @@ DebugInterface::readDebugMapping(
 
                 if ( word[ word.length() - 1 ] != '.' )
                     rule += " ";
-            } while ( word[ word.length() - 1 ] != '.' );
+            } while ( word[ word.length() - 1 ] != '.' ); // rule is delimited by an '.'
 
             trace_msg( debug, 2, "Adding { " << debugConstant << " -> " << rule << " } to the rule map" );
             RuleNames::addRule( debugConstant, rule, variables );
@@ -332,27 +304,29 @@ DebugInterface::readDebugMapping(
 vector< vector< Literal > >
 DebugInterface::computeDisjointCores()
 {
-    vector< Literal > reducedAssumptions( consideredDebugLiterals );
     vector< vector< Literal > > cores;
+    vector< Literal > reducedAssumptions( consideredDebugLiterals );
 
     trace_msg( debug, 1, "Computing disjoint cores" );
 
-    unsigned int solverResult = computeUnsatCore( reducedAssumptions, assertions );
+    unsigned int solverResult = runSolver( reducedAssumptions, assertions );
     resetSolver();
 
     while ( solverResult == INCOHERENT )
     {
-        vector< Literal > core = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ), 3 );
+        vector< Literal > core = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore(), 3 );
         cores.push_back( core );
 
         trace_msg( debug, 2, "Found core: " << Formatter::formatClause( core ) );
 
+        // disjoint cores must not contain any literals from the current core
+        // -> remove the core literals from the assumptions
         for ( const Literal& coreLiteral : core )
         {
             reducedAssumptions.erase( std::remove( reducedAssumptions.begin(), reducedAssumptions.end(), Literal( coreLiteral.getVariable(), POSITIVE) ), reducedAssumptions.end() );
         }
 
-        solverResult = computeUnsatCore( reducedAssumptions, assertions );
+        solverResult = runSolver( reducedAssumptions, assertions );
         resetSolver();
     }
 
@@ -383,7 +357,7 @@ DebugInterface::resetSolver()
 }
 
 unsigned int
-DebugInterface::computeUnsatCore(
+DebugInterface::runSolver(
     const vector< Literal >& debugAssumptions,
     const vector< Literal >& assertions)
 {
@@ -418,7 +392,7 @@ DebugInterface::determineQueryVariable(
         unsigned int entropy = abs( pair.second );
 
         if ( entropy < lowestEntropy
-             && find( queryHistory.begin(), queryHistory.end(), variable ) == queryHistory.end()
+             && !isAssertion( variable )
              && !isDebugVariable( variable )
              && !isFact( variable )
              && solver.isUndefined( variable ) )
@@ -440,7 +414,7 @@ DebugInterface::determineQueryVariable(
 {
     unsigned int numModels = 0;
 
-    for ( Literal relaxLiteral : unsatCore )
+    for ( const Literal& relaxLiteral : unsatCore )
     {
         trace_msg( debug, level, "Relaxing " << Formatter::formatLiteral( relaxLiteral ) );
         vector< Literal > relaxedAssumptions;
@@ -456,7 +430,7 @@ DebugInterface::determineQueryVariable(
         {
             trace_msg( debug, level, "Could not relax " << relaxLiteral << " because it was not inside the parent assumptions" );
         }
-        else if ( computeUnsatCore( relaxedAssumptions, assertions ) == COHERENT )
+        else if ( runSolver( relaxedAssumptions, assertions ) == COHERENT )
         {
             numModels ++;
             trace_msg( debug, level, "Model found after relaxing " << Formatter::formatLiteral( relaxLiteral ) );
@@ -477,7 +451,7 @@ DebugInterface::determineQueryVariable(
         else
         {
             resetSolver();
-            vector< Literal > relaxedUnsatCore = coreMinimizer.minimizeUnsatCore( clauseToVector( *solver.getUnsatCore() ), level + 1 );
+            vector< Literal > relaxedUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore(), level + 1 );
             numModels += determineQueryVariable( relaxedUnsatCore, variableEntropy, relaxedAssumptions, level + 1 );
         }
     }
@@ -518,8 +492,7 @@ DebugInterface::loadHistory(
 
 	for ( unsigned int i = 0; i < queryHistoryLoaded.size(); i++ )
 	{
-		queryHistory.push_back( queryHistoryLoaded[i] );
-		answerHistory.push_back( answerHistoryLoaded[i] );
+	    assertions.push_back( Literal( queryHistoryLoaded[ i ], answerHistoryLoaded[ i ] == TRUE ? POSITIVE : NEGATIVE ) );
 	}
 
     return true;
@@ -531,10 +504,10 @@ DebugInterface::saveHistory(
 {
 	string ruleHistory = "";
 
-	for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
+	for ( const Literal& assertion : assertions )
 	{
-		ruleHistory += VariableNames::getName( queryHistory[ i ] ) + " " +
-					   ( ( answerHistory[ i ] == TRUE ) ? "true" : "false" ) + "\n";
+		ruleHistory += VariableNames::getName( assertion.getVariable() ) + " " +
+					   ( assertion.isPositive() ? "true" : "false" ) + "\n";
 	}
 
 	ofstream historyFile ( filename );

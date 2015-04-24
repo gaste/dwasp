@@ -55,11 +55,11 @@ public:
 	virtual void printCore( const vector< Literal >& core ) = 0;
 	virtual void printCoreGroundRules( const vector< Literal >& core ) = 0;
 	virtual void printCoreUngroundRules( const vector< Literal >& core ) = 0;
-	virtual void printHistory( const vector< Var >& queryHistory, const vector< TruthValue >& answerHistory ) = 0;
+	virtual void printHistory( const vector< Literal >& assertionHistory ) = 0;
 	virtual string askHistoryFilename() = 0;
 	virtual TruthValue askTruthValue( const Var variable ) = 0;
 	virtual Literal getAssertion() = 0;
-	virtual unsigned int chooseAssertionToUndo( const vector< Var >& queryHistory, const vector< TruthValue >& answerHistory ) = 0;
+	virtual unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory ) = 0;
 	virtual void greetUser() = 0;
 	virtual void informSolving() = 0;
 	virtual void informComputingQueryVariable() = 0;

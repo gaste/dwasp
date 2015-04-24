@@ -55,13 +55,15 @@ class DebugInterface
         DebugInterface( const DebugInterface& );
         Var determineQueryVariable( const vector< Literal >& unsatCore );
         unsigned int determineQueryVariable( const vector< Literal >& unsatCore, map< Var, int >& variableEntropy, const vector< Literal >& relaxedLiterals, unsigned int level );
-        vector< Literal > clauseToVector( const Clause& unsatCore );
+        vector< Literal > getCoreWithoutAssertions( const vector< Literal >& unsatCore );
         void resetSolver();
-        unsigned int computeUnsatCore( const vector< Literal >& debugAssumptions, const vector< Literal >& assertions );
+        unsigned int runSolver( const vector< Literal >& debugAssumptions, const vector< Literal >& assertions );
         bool saveHistory( const string& filename );
         bool loadHistory( const string& filename );
-        bool isDebugVariable( const Var variable );
         bool isFact( const Var variable );
+        bool isVariableContainedInLiterals( const Var variable, const vector< Literal >& literals );
+        inline bool isDebugVariable( const Var variable ) { return isVariableContainedInLiterals( variable, debugLiterals ); }
+        inline bool isAssertion( const Var variable ) { return isVariableContainedInLiterals( variable, assertions ); }
         vector< vector< Literal > > computeDisjointCores();
         vector< Literal > fixCore( const vector< vector< Literal > >& cores );
 
@@ -72,8 +74,6 @@ class DebugInterface
         vector< Literal > debugLiterals;
         vector< Literal > consideredDebugLiterals;
         vector< Literal > assertions;
-        vector< Var > queryHistory;
-        vector< TruthValue > answerHistory;
 };
 
 #endif

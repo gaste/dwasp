@@ -18,6 +18,19 @@
 #include "util/Formatter.h"
 #include "util/Trace.h"
 
+vector< Literal >
+QuickXPlain::minimizeUnsatCore(
+    const Clause& unsatCore,
+    unsigned int level )
+{
+    vector< Literal > coreLiterals;
+
+    for ( unsigned int i = 0; i < unsatCore.size(); i++ )
+        coreLiterals.push_back( unsatCore[ i ] );
+
+    return minimizeUnsatCore( coreLiterals, level );
+}
+
 /**
  * Calculates the preferred conflict out of a number of conflicting literals using the QuickXplain algorithm
  * Used for debugging INCOHERENT programs

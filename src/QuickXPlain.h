@@ -21,6 +21,8 @@
 
 #include <vector>
 
+#include "Clause.h"
+
 using namespace std;
 
 #include "Literal.h"
@@ -36,6 +38,7 @@ class QuickXPlain
 {
     public:
         inline QuickXPlain( Solver& s ) : solver( s ) { }
+        vector< Literal > minimizeUnsatCore( const Clause& unsatCore, unsigned int level = 1 );
         vector< Literal > minimizeUnsatCore( const vector< Literal >& unsatCore, unsigned int level = 1 );
 
     private:

@@ -137,15 +137,16 @@ DebugUserInterfaceCLI::printCoreUngroundRules(
 
 void
 DebugUserInterfaceCLI::printHistory(
-    const vector< Var >& queryHistory,
-    const vector< TruthValue >& answerHistory )
+    const vector< Literal >& assertionHistory )
 {
     string history = "";
 
-    for ( unsigned int i = 0; i < queryHistory.size(); i ++ )
+    for ( unsigned int i = 0; i < assertionHistory.size(); i ++ )
     {
-        history += to_string( i ) + ": " + VariableNames::getName( queryHistory[ i ] )
-                + " = " + ((answerHistory[ i ] == TRUE) ? "true" : "false")
+        history += to_string( i ) + ": "
+                + VariableNames::getName( assertionHistory[ i ].getVariable() )
+                + " = "
+                + (assertionHistory[ i ].isPositive() ? "true" : "false")
                 + "\n";
     }
 
@@ -217,23 +218,22 @@ DebugUserInterfaceCLI::getAssertion()
 
 unsigned int
 DebugUserInterfaceCLI::chooseAssertionToUndo(
-    const vector< Var >& queryHistory,
-    const vector< TruthValue >& answerHistory )
+    const vector< Literal >& assertionHistory )
 {
-    if ( queryHistory.empty() )
+    if ( assertionHistory.empty() )
     {
         cout << "No assertions available." << endl;
-        return 0;
+        return 1;
     }
 
     string userInput;
-    unsigned int assertion = queryHistory.size();
+    unsigned int assertion = assertionHistory.size();
     cout << "Choose an assertion to undo:" << endl;
-    printHistory( queryHistory, answerHistory );
+    printHistory( assertionHistory );
 
     do
     {
-        cout << "Assertion (0-" << (queryHistory.size() - 1) << "): ";
+        cout << "Assertion (0-" << (assertionHistory.size() - 1) << "): ";
         getline( cin, userInput );
 
         // check if the input is a number
@@ -242,7 +242,7 @@ DebugUserInterfaceCLI::chooseAssertionToUndo(
 
         if ( !userInput.empty() && iterator == userInput.end() )
             assertion = atoi( userInput.c_str() );
-    } while ( assertion >= queryHistory.size() );
+    } while ( assertion >= assertionHistory.size() );
 
     return assertion;
 }

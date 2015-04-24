@@ -48,11 +48,11 @@ public:
 	void printCore( const vector< Literal >& core );
 	void printCoreGroundRules( const vector< Literal >& core );
     void printCoreUngroundRules( const vector< Literal >& core );
-	void printHistory( const vector< Var >& queryHistory, const vector< TruthValue >& answerHistory );
+	void printHistory( const vector< Literal >& assertionHistory );
 	string askHistoryFilename();
 	TruthValue askTruthValue( const Var variable );
 	Literal getAssertion();
-	unsigned int chooseAssertionToUndo( const vector< Var >& queryHistory, const vector< TruthValue >& answerHistory );
+	unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory );
     void greetUser();
     void informSolving();
     void informComputingQueryVariable();

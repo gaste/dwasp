@@ -169,6 +169,7 @@ RuleNames::getVariables(
     vector< Var > variables;
     string groundRule = getGroundRule( debugAtom );
 
+    // remove all spaces
     groundRule.erase( remove_if( groundRule.begin(), groundRule.end(), ::isspace ), groundRule.end() );
 
     regex atomRegex( REGEX_ATOM );
@@ -177,7 +178,15 @@ RuleNames::getVariables(
     while( regex_search( groundRule, atomMatch, atomRegex ) )
     {
         Var variable;
-        if ( VariableNames::getVariable( atomMatch.str(), variable ) )
+        string atom = atomMatch.str();
+
+        // remove any prefix "not" due to initial removal of all spaces
+        if ( atom.find( "not" ) == 0 )
+        {
+            atom = atom.substr( 3 );
+        }
+
+        if ( VariableNames::getVariable( atom, variable ) )
         {
             variables.push_back( variable );
         }

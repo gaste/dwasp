@@ -34,6 +34,8 @@
 #include "util/Trace.h"
 #include "util/VariableNames.h"
 
+#define QUERY_DETERMINATION_TIMEOUT 3
+
 bool
 DebugInterface::isVariableContainedInLiterals(
     const Var variable,
@@ -385,7 +387,7 @@ DebugInterface::determineQueryVariable(
     trace_msg( debug, 1, "Determining query variable" );
     trace_msg( debug, 2, "Relaxing core variables and computing models" );
 
-    unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, consideredDebugLiterals, 3 );
+    unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, consideredDebugLiterals, 3, time( NULL ) );
     unsigned int lowestEntropy = numModels + 1;
 
     trace_msg( debug, 2, "Found " << numModels << " models" );
@@ -434,12 +436,19 @@ DebugInterface::determineQueryVariable(
     const vector< Literal >& unsatCore,
     map< Var, int >& variableEntropy,
     const vector< Literal >& parentAssumptions,
-    unsigned int level )
+    unsigned int level,
+    const time_t& startTime)
 {
     unsigned int numModels = 0;
 
     for ( const Literal& relaxLiteral : unsatCore )
     {
+        if ( difftime( time( NULL ), startTime ) > QUERY_DETERMINATION_TIMEOUT )
+        {
+            trace_msg( debug, 2, "Query variable determination aborted due to timeout" );
+            return numModels;
+        }
+
         trace_msg( debug, level, "Relaxing " << Formatter::formatLiteral( relaxLiteral ) );
         vector< Literal > relaxedAssumptions;
         for ( unsigned int i = 0; i < parentAssumptions.size(); i ++ )
@@ -469,7 +478,7 @@ DebugInterface::determineQueryVariable(
         {
             resetSolver();
             vector< Literal > relaxedUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore(), level + 1 );
-            numModels += determineQueryVariable( relaxedUnsatCore, variableEntropy, relaxedAssumptions, level + 1 );
+            numModels += determineQueryVariable( relaxedUnsatCore, variableEntropy, relaxedAssumptions, level + 1, startTime );
         }
     }
 

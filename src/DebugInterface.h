@@ -19,7 +19,9 @@
 #ifndef DEBUGINTERFACE_H
 #define DEBUGINTERFACE_H
 
+#include <ctime>
 #include <map>
+#include <string>
 #include <vector>
 
 #include "util/Constants.h"
@@ -54,7 +56,7 @@ class DebugInterface
     private:
         DebugInterface( const DebugInterface& );
         Var determineQueryVariable( const vector< Literal >& unsatCore );
-        unsigned int determineQueryVariable( const vector< Literal >& unsatCore, map< Var, int >& variableEntropy, const vector< Literal >& relaxedLiterals, unsigned int level );
+        unsigned int determineQueryVariable( const vector< Literal >& unsatCore, map< Var, int >& variableEntropy, const vector< Literal >& relaxedLiterals, unsigned int level, const time_t& startTime );
         vector< Literal > getCoreWithoutAssertions( const vector< Literal >& unsatCore );
         void resetSolver();
         unsigned int runSolver( const vector< Literal >& debugAssumptions, const vector< Literal >& assertions );

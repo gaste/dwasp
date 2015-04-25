@@ -44,6 +44,9 @@ class RuleNames
         static map< string, string > getSubstitutionMap( const Literal& debugLiteral ) { return getSubstitutionMap( debugLiteral.getVariable() ); }
         static map< string, string > getSubstitutionMap( const Var debugVariable ) { return getSubstitutionMap( VariableNames::getName( debugVariable ) ); }
         static map< string, string > getSubstitutionMap( const string& debugAtom );
+        static vector< Var > getVariables( const Literal& debugLiteral ) { return getVariables( debugLiteral.getVariable() ); }
+        static vector< Var > getVariables( const Var debugVariable ) { return getVariables( VariableNames::getName( debugVariable ) ); }
+        static vector< Var > getVariables( const string& debugAtom );
 
     private:
         static vector< string > getTerms( const string& term );

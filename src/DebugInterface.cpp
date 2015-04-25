@@ -378,24 +378,48 @@ Var
 DebugInterface::determineQueryVariable(
     const vector< Literal >& unsatCore )
 {
-    Var queryVariable = unsatCore[ 0 ].getVariable();
+    Var queryVariable = 0;
     map< Var, int > variableEntropy;
+    map< Var, unsigned int > variableOccurences;
 
-    unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, consideredDebugLiterals, 1 );
+    trace_msg( debug, 1, "Determining query variable" );
+    trace_msg( debug, 2, "Relaxing core variables and computing models" );
+
+    unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, consideredDebugLiterals, 3 );
     unsigned int lowestEntropy = numModels + 1;
+
+    trace_msg( debug, 2, "Found " << numModels << " models" );
 
     resetSolver();
 
-    for ( auto const& pair : variableEntropy )
+    for ( const Literal& coreLiteral : unsatCore )
+    {
+        if ( isDebugVariable( coreLiteral.getVariable() ) )
+        {
+            for ( const Var coreVariable : RuleNames::getVariables( coreLiteral ) )
+                variableOccurences[ coreVariable ] ++;
+        }
+    }
+
+#ifdef TRACE_ON
+    trace_msg( debug, 2, "Computed variable entropies" );
+    for ( const auto& pair : variableOccurences )
+    {
+        trace_msg( debug, 3, "Variable " << VariableNames::getName( pair.first ) << ": " << pair.second << "x in the core, entropy = " << variableEntropy[ pair.first ] );
+    }
+#endif
+
+    for ( auto const& pair : variableOccurences )
     {
         Var variable = pair.first;
-        unsigned int entropy = abs( pair.second );
+        unsigned int entropy = abs( variableEntropy[ variable ] );
 
-        if ( entropy < lowestEntropy
+        if ( (entropy < lowestEntropy
+                || (entropy == lowestEntropy
+                    && variableOccurences[ variable ]
+                     > variableOccurences[ queryVariable ]))
              && !isAssertion( variable )
-             && !isDebugVariable( variable )
-             && !isFact( variable )
-             && solver.isUndefined( variable ) )
+             && !isFact( variable ) )
         {
             queryVariable = variable;
             lowestEntropy = entropy;
@@ -437,14 +461,7 @@ DebugInterface::determineQueryVariable(
 
             for( Var variable = 1; variable <= solver.numberOfVariables(); variable++ )
             {
-                if ( variableEntropy.count( variable ) == 0 )
-                {
-                    variableEntropy[ variable ] = solver.isTrue( variable ) ? 1 : -1;
-                }
-                else
-                {
-                    variableEntropy[ variable ] += solver.isTrue( variable ) ? 1 : -1;
-                }
+                variableEntropy[ variable ] = variableEntropy[ variable ] + (solver.isTrue( variable ) ? 1 : -1);
             }
             resetSolver();
         }

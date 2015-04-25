@@ -18,11 +18,18 @@
 
 #include "RuleNames.h"
 
-#include <iostream>
+#include <algorithm>
+#include <cctype>
 #include <utility>
 #include <regex>
 
 #include "Assert.h"
+#include "Constants.h"
+#include "Trace.h"
+
+#define REGEX_CONSTANT "(_*[a-z][A-Za-z0-9]*)"
+#define REGEX_INTEGER "([0-9]*)"
+#define REGEX_ATOM REGEX_CONSTANT "(\\(((,)?(" REGEX_CONSTANT "|" REGEX_INTEGER "))*\\))?"
 
 map< string, string > RuleNames::ruleMap;
 map< string, vector< string > > RuleNames::variablesMap;
@@ -124,9 +131,9 @@ vector< string >
 RuleNames::getTerms(
     const string& term )
 {
-    int openBrackets = 0;
+    int openBrackets = 0; // required for nested terms, i.e. _debug1(a(b,c),d)
     vector< string > terms;
-    string currentTerm = ""; // required for nested terms, i.e. _debug1(a(b,c),d)
+    string currentTerm = "";
 
     for ( unsigned int i = 0; i < term.length(); i++ )
     {
@@ -153,4 +160,29 @@ RuleNames::getTerms(
         terms.push_back( currentTerm );
 
     return terms;
+}
+
+vector< Var >
+RuleNames::getVariables(
+    const string& debugAtom )
+{
+    vector< Var > variables;
+    string groundRule = getGroundRule( debugAtom );
+
+    groundRule.erase( remove_if( groundRule.begin(), groundRule.end(), ::isspace ), groundRule.end() );
+
+    regex atomRegex( REGEX_ATOM );
+    smatch atomMatch;
+
+    while( regex_search( groundRule, atomMatch, atomRegex ) )
+    {
+        Var variable;
+        if ( VariableNames::getVariable( atomMatch.str(), variable ) )
+        {
+            variables.push_back( variable );
+        }
+        groundRule = atomMatch.suffix().str();
+    }
+
+    return variables;
 }

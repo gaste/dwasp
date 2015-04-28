@@ -171,21 +171,32 @@ DebugInterface::debug()
         case ASSERT_VARIABLE:
         {
             Literal assertion = userInterface->getAssertion();
-            assertions.push_back( assertion );
 
-            userInterface->informSolving();
-
-            if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
+            if ( isAssertion( assertion.getVariable() ) )
             {
-                resetSolver();
-                assert( solver.getUnsatCore() != NULL );
-                minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
+                userInterface->informAssertionAlreadyPresent( VariableNames::getName( assertion.getVariable() ) );
+            } else if ( isFact( assertion.getVariable() ) )
+            {
+                userInterface->informAssertionIsFact( VariableNames::getName( assertion.getVariable() ) );
             }
             else
             {
-                cout << "Found answer set";
-                solver.printAnswerSet();
-                continueDebugging = false;
+                assertions.push_back( assertion );
+
+                userInterface->informSolving();
+
+                if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
+                {
+                    resetSolver();
+                    assert( solver.getUnsatCore() != NULL );
+                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
+                }
+                else
+                {
+                    cout << "Found answer set";
+                    solver.printAnswerSet();
+                    continueDebugging = false;
+                }
             }
             break;
         }
@@ -193,7 +204,17 @@ DebugInterface::debug()
         {
             userInterface->informComputingQueryVariable();
             Var queryVariable = determineQueryVariable( minimalUnsatCore );
-            TruthValue queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
+            TruthValue queryVariableTruthValue = UNDEFINED;
+
+            if ( queryVariable == 0 )
+            {
+                userInterface->informNoQueryPossible();
+            }
+            else
+            {
+                queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
+            }
+
 
             if ( queryVariableTruthValue != UNDEFINED )
             {

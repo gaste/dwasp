@@ -33,7 +33,7 @@ map< string, cmd > DebugUserInterfaceCLI::commandMap =
 {
     { "show core", { SHOW_CORE, "Show the literals inside the UNSAT core." } },
     { "show core ground", { SHOW_CORE_GROUND_RULES, "Show the ground rules inside the UNSAT core." } },
-    { "show core unground", { SHOW_CORE_NONGROUND_RULES, "Show the unground rules inside the UNSAT core." } },
+    { "show core nonground", { SHOW_CORE_NONGROUND_RULES, "Show the non-ground rules inside the UNSAT core." } },
     { "show history", { SHOW_HISTORY, "Show the history of assertions." } },
     { "ask", { ASK_QUERY, "Ask me a question about the program." } },
     { "save history", { SAVE_HISTORY, "Save the assertion history in a file." } },
@@ -306,4 +306,24 @@ DebugUserInterfaceCLI::informCouldNotLoadHistory(
     const string& filename )
 {
     cout << "Unable to load the history from the file '" << filename << "'" << endl;
+}
+
+void
+DebugUserInterfaceCLI::informAssertionAlreadyPresent(
+    const string& variable )
+{
+    cout << "The variable \"" << variable << "\" is already an assertion" << endl;
+}
+
+void
+DebugUserInterfaceCLI::informAssertionIsFact(
+    const string& variable )
+{
+    cout << "The variable \"" << variable << "\" is a fact" << endl;
+}
+
+void
+DebugUserInterfaceCLI::informNoQueryPossible()
+{
+    cout << "No more queries are possible" << endl;
 }

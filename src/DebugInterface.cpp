@@ -84,7 +84,7 @@ DebugInterface::debug()
 
     if ( runSolver( consideredDebugLiterals, assertions ) != INCOHERENT )
     {
-        ErrorMessage::errorGeneric( "Program not INCOHERENT" );
+        userInterface->informProgramCoherent();
         return;
     }
 
@@ -101,6 +101,8 @@ DebugInterface::debug()
             facts.push_back( variable );
         }
     }
+
+    determineAssertionDebugLiterals();
 
     assert( solver.getUnsatCore() != NULL );
 
@@ -156,8 +158,7 @@ DebugInterface::debug()
                 }
                 else
                 {
-                    cout << "Found answer set";
-                    solver.printAnswerSet();
+                    userInterface->informProgramCoherent();
                     continueDebugging = false;
                 }
             }
@@ -193,8 +194,7 @@ DebugInterface::debug()
                 }
                 else
                 {
-                    cout << "Found answer set";
-                    solver.printAnswerSet();
+                    userInterface->informProgramCoherent();
                     continueDebugging = false;
                 }
             }
@@ -232,8 +232,7 @@ DebugInterface::debug()
                 }
                 else
                 {
-                    cout << "Found answer set";
-                    solver.printAnswerSet();
+                    userInterface->informProgramCoherent();
                     continueDebugging = false;
                 }
             }
@@ -255,8 +254,7 @@ DebugInterface::debug()
                 }
                 else
                 {
-                    cout << "Found answer set";
-                    solver.printAnswerSet();
+                    userInterface->informProgramCoherent();
                     continueDebugging = false;
                 }
             }
@@ -379,6 +377,29 @@ DebugInterface::resetSolver()
     solver.clearConflictStatus();
 }
 
+void
+DebugInterface::determineAssertionDebugLiterals()
+{
+    trace_msg( debug, 1, "Determining _debug atoms that are assertions" );
+
+    for ( const Literal& debugLiteral : debugLiterals )
+    {
+        // a rule r is assumed to be an assertion if it is a ground constraint
+        // with |B(r)| = 1
+        if ( VariableNames::getName( debugLiteral.getVariable() ).find( '(' ) == string::npos )
+        {
+            string rule = RuleNames::getRule( debugLiteral );
+            rule.erase( remove_if( rule.begin(), rule.end(), ::isspace ), rule.end() );
+
+            if ( rule.find( ":-" ) == 0 && rule.find( ',' ) == string::npos )
+            {
+                trace_msg( debug, 2, "Debug atom '" << debugLiteral << "' is assumed to be an assertion. Rule: '" << RuleNames::getRule( debugLiteral ) << "'" );
+                assertionDebugLiterals.push_back( debugLiteral );
+            }
+        }
+    }
+}
+
 unsigned int
 DebugInterface::runSolver(
     const vector< Literal >& debugAssumptions,
@@ -401,6 +422,59 @@ Var
 DebugInterface::determineQueryVariable(
     const vector< Literal >& unsatCore )
 {
+    if ( isUnfoundedCore( unsatCore ) )
+        return determineQueryVariableUnfounded( unsatCore );
+    else
+        return determineQueryVariableFounded( unsatCore );
+}
+
+Var
+DebugInterface::determineQueryVariableUnfounded(
+    const vector< Literal >& unsatCore )
+{
+    Var queryVariable = 0;
+    map< Var, unsigned int > variableOccurences;
+
+    trace_msg( debug, 1, "Determining query variables - unfounded case" );
+
+    for ( const Literal& coreLiteral : unsatCore )
+    {
+        Var unfoundedVariable = coreLiteral.getVariable();
+
+        if ( isVariableContainedInLiterals( unfoundedVariable, assertionDebugLiterals ) )
+        {
+            unfoundedVariable = RuleNames::getVariables( coreLiteral )[ 0 ];
+        }
+
+        trace_msg( debug, 2, "Get rule variables for variable '" << VariableNames::getName( unfoundedVariable ) << "'" );
+        for ( const Var bodyVariable : RuleNames::getVariablesOfSupportingRules( unfoundedVariable ) )
+        {
+            trace_msg( debug, 3, "Variable: " << VariableNames::getName( bodyVariable ) );
+            variableOccurences[ bodyVariable ] ++;
+        }
+    }
+
+    // return most occuring variable
+    unsigned int maxOccurence = 0;
+
+    for ( const auto& pair : variableOccurences )
+    {
+        if ( pair.second > maxOccurence
+             && !isAssertion( pair.second )
+             && !isFact( pair.second ))
+        {
+            maxOccurence = pair.second;
+            queryVariable = pair.first;
+        }
+    }
+
+    return queryVariable;
+}
+
+Var
+DebugInterface::determineQueryVariableFounded(
+    const vector< Literal >& unsatCore )
+{
     Var queryVariable = 0;
     map< Var, int > variableEntropy;
     map< Var, unsigned int > variableOccurences;
@@ -408,7 +482,7 @@ DebugInterface::determineQueryVariable(
     trace_msg( debug, 1, "Determining query variable" );
     trace_msg( debug, 2, "Relaxing core variables and computing models" );
 
-    unsigned int numModels = determineQueryVariable( unsatCore, variableEntropy, consideredDebugLiterals, 3, time( NULL ) );
+    unsigned int numModels = determineQueryVariableFounded( unsatCore, variableEntropy, consideredDebugLiterals, 3, time( NULL ) );
     unsigned int lowestEntropy = numModels + 1;
 
     trace_msg( debug, 2, "Found " << numModels << " models" );
@@ -453,7 +527,7 @@ DebugInterface::determineQueryVariable(
 }
 
 unsigned int
-DebugInterface::determineQueryVariable(
+DebugInterface::determineQueryVariableFounded(
     const vector< Literal >& unsatCore,
     map< Var, int >& variableEntropy,
     const vector< Literal >& parentAssumptions,
@@ -499,11 +573,26 @@ DebugInterface::determineQueryVariable(
         {
             resetSolver();
             vector< Literal > relaxedUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore(), level + 1 );
-            numModels += determineQueryVariable( relaxedUnsatCore, variableEntropy, relaxedAssumptions, level + 1, startTime );
+            numModels += determineQueryVariableFounded( relaxedUnsatCore, variableEntropy, relaxedAssumptions, level + 1, startTime );
         }
     }
 
     return numModels;
+}
+
+bool
+DebugInterface::isUnfoundedCore(
+    const vector< Literal > unsatCore )
+{
+    // core is unfounded, if each core variable is an assertion
+    for ( const Literal& coreLiteral : unsatCore )
+    {
+        if ( !isVariableContainedInLiterals( coreLiteral.getVariable(), assertions )
+          && !isVariableContainedInLiterals( coreLiteral.getVariable(), assertionDebugLiterals ) )
+            return false;
+    }
+
+    return true;
 }
 
 bool

@@ -71,6 +71,7 @@ public:
 	virtual void informAssertionAlreadyPresent( const string& variable ) = 0;
 	virtual void informAssertionIsFact( const string& variable ) = 0;
 	virtual void informNoQueryPossible() = 0;
+	virtual void informProgramCoherent() = 0;
 };
 
 inline DebugUserInterface::~DebugUserInterface() { }

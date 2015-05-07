@@ -64,6 +64,7 @@ public:
     void informAssertionAlreadyPresent( const string& variable );
     void informAssertionIsFact( const string& variable );
     void informNoQueryPossible();
+    void informProgramCoherent();
 
 private:
 	inline void promptInput(string& input) { cout << "WDB> "; getline(cin, input); }

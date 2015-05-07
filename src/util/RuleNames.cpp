@@ -22,6 +22,7 @@
 #include <cctype>
 #include <utility>
 #include <regex>
+#include <iostream>
 
 #include "Assert.h"
 #include "Constants.h"
@@ -191,6 +192,157 @@ RuleNames::getVariables(
             variables.push_back( variable );
         }
         groundRule = atomMatch.suffix().str();
+    }
+
+    return variables;
+}
+
+vector< Var >
+RuleNames::getVariablesOfSupportingRules(
+    const string& atom )
+{
+    vector< Var > variables;
+
+    Var atomVariable = 0;
+    VariableNames::getVariable( atom, atomVariable );
+
+    // get the predicate symbol out of the atom
+    string predicateSymbol = atom;
+    vector< string > terms;
+    std::size_t parenthesisPos = atom.find('(');
+    if ( parenthesisPos != string::npos )
+    {
+        predicateSymbol = atom.substr( 0, parenthesisPos );
+        std::size_t termStart = atom.find( '(' ) + 1;
+        std::size_t termLength = atom.length() - termStart - 1;
+        terms = getTerms( atom.substr( termStart, termLength ) );
+    }
+
+    vector< pair< string, map< string, string > > > debugSymbolsWithPartialSubstitution;
+
+    for ( const auto& ruleMapEntry : ruleMap )
+    {
+        string head = ruleMapEntry.second;
+        char separator = '|';
+
+        if ( head.find( ":-" ) != string::npos )
+        {
+            head = ruleMapEntry.second.substr( 0, head.find( ":-" ) );
+        }
+        else if ( head.find( '|' ) == string::npos && head.find( '{' ) == string::npos )
+        {
+            // no disjunction, choice rule or normal rule -> skip
+            head = "";
+        }
+
+        if ( head.find( '{' ) != string::npos )
+        {
+            // choice rule, get the choices
+            separator = ';';
+            std::size_t openPos = head.find( '{' );
+            std::size_t closePos = head.find( '}' );
+
+            head = head.substr( openPos + 1, closePos - openPos - 1 );
+        }
+
+        // remove all spaces
+        head.erase( remove_if( head.begin(), head.end(), ::isspace ), head.end() );
+        if ( head[ head.length() - 1 ] == '.' )
+        {
+            // delete dot at the end
+            head = head.substr( 0, head.length() - 1 );
+        }
+
+        // iterate over all head atoms and check for a match
+        while ( head.length() > 0 )
+        {
+            std::size_t separatorPos = head.find( separator );
+            string headAtom = head.substr( 0, separatorPos );
+
+            if ( separatorPos != string::npos ) head = head.substr( separatorPos + 1 );
+            else head = "";
+
+            if ( headAtom.find( predicateSymbol ) == 0
+                 && ( headAtom.length() == predicateSymbol.length()
+                      || headAtom[ predicateSymbol.length() ] == '(' ) )
+            {
+                vector< string > headAtomVariables;
+
+                // check if they have the same arity
+                if ( headAtom.find( '(' ) != string::npos )
+                {
+                    std::size_t termStart = headAtom.find( '(' ) + 1;
+                    std::size_t termLength = headAtom.length() - termStart - 1;
+                    headAtomVariables = getTerms( headAtom.substr( termStart, termLength ) );
+
+                }
+
+                if ( headAtomVariables.size() == terms.size() )
+                {
+                    // same arity --> build substitution
+                    map< string, string > substitution;
+                    bool matchingSubstitution = true;
+
+                    for ( unsigned int i = 0; i < headAtomVariables.size(); i ++ )
+                    {
+                        // handle case where a variable of the head atom occurs twice.
+                        // e.g. pred(1,2) and pred(X,X) are not compliant
+                        if ( substitution.count( headAtomVariables[ i ] ) == 0 )
+                        {
+                            substitution[ headAtomVariables[ i ] ] = terms[ i ];
+                        }
+                        else if ( substitution[ headAtomVariables[ i ] ] != terms[ i ] )
+                        {
+                            matchingSubstitution = false;
+                        }
+                    }
+
+                    if ( matchingSubstitution )
+                    {
+                        debugSymbolsWithPartialSubstitution.push_back( make_pair( ruleMapEntry.first, substitution ) );
+                    }
+                }
+            }
+        }
+    }
+
+    // iterate over the found symbols with their substitutions
+    for ( const auto& debugSymbolWithSubstitution : debugSymbolsWithPartialSubstitution )
+    {
+        string debugSymbol = debugSymbolWithSubstitution.first;
+        map< string, string > partialSubstitution = debugSymbolWithSubstitution.second;
+
+        // find the corresponding debug symbol inside the variable names
+        for ( const string& variableName : VariableNames::getVariableNames() )
+        {
+            if ( variableName.find( debugSymbol ) != string::npos )
+            {
+                // candidate, check for substitution
+                map< string, string > substitution = getSubstitutionMap( variableName );
+
+                bool substitutionMatches = true;
+
+                // check if the partial substitution matches
+                for ( const auto& sub : partialSubstitution )
+                {
+                    if ( substitution[ sub.first ] != sub.second )
+                    {
+                        substitutionMatches = false;
+                    }
+                }
+
+                // extract H(r) \ { atom } U B+(r) U { a | not a in B-(r) }
+                if ( substitutionMatches )
+                {
+                    // get all boolean variables of the ground rule
+                    for ( Var v : getVariables( variableName ) )
+                    {
+                        if ( v != atomVariable )
+                            variables.push_back( v );
+                    }
+                }
+            }
+        }
     }
 
     return variables;

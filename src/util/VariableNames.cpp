@@ -64,6 +64,12 @@ VariableNames::getVariable (
 	return false;
 }
 
+const vector< string >&
+VariableNames::getVariableNames()
+{
+    return variables;
+}
+
 void
 VariableNames::setName(
     Var v,

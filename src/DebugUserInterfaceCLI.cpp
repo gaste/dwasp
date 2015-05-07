@@ -327,3 +327,13 @@ DebugUserInterfaceCLI::informNoQueryPossible()
 {
     cout << "No more queries are possible" << endl;
 }
+
+void
+DebugUserInterfaceCLI::informProgramCoherent()
+{
+    cout << "The program is coherent. Add" << endl
+         << "    :- not atom." << endl
+         << "for atoms expected to be in the answer set and" << endl
+         << "    :- atom." << endl
+         << "for atoms expected not to be in the answer set to the program." << endl;
+}

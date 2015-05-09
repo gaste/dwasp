@@ -457,14 +457,20 @@ DebugInterface::determineQueryVariableUnfounded(
     // return most occuring variable
     unsigned int maxOccurence = 0;
 
+    trace_msg( debug, 2, "Iterating over all query variable candidates" );
     for ( const auto& pair : variableOccurences )
     {
-        if ( pair.second > maxOccurence
-             && !isAssertion( pair.second )
-             && !isFact( pair.second ))
+        Var currentVariable = pair.first;
+        unsigned int numOccurances = pair.second;
+
+        trace_msg( debug, 3, "Variable '" << VariableNames::getName( currentVariable ) << "' occurs " << numOccurances << " times");
+
+        if ( numOccurances > maxOccurence
+             && !isAssertion( currentVariable )
+             && !isFact( currentVariable ))
         {
-            maxOccurence = pair.second;
-            queryVariable = pair.first;
+            maxOccurence = numOccurances;
+            queryVariable = currentVariable;
         }
     }
 

@@ -47,9 +47,15 @@ class RuleNames
         static vector< Var > getVariables( const Literal& debugLiteral ) { return getVariables( debugLiteral.getVariable() ); }
         static vector< Var > getVariables( const Var debugVariable ) { return getVariables( VariableNames::getName( debugVariable ) ); }
         static vector< Var > getVariables( const string& debugAtom );
+        static vector< Literal > getLiterals( const Literal& debugLiteral ) { return getLiterals( debugLiteral.getVariable() ); }
+        static vector< Literal > getLiterals( const Var debugVariable ) { return getLiterals( VariableNames::getName( debugVariable ) ); }
+        static vector< Literal > getLiterals( const string& debugAtom );
         static vector< Var > getVariablesOfSupportingRules( const Literal& headLiteral ) { return getVariablesOfSupportingRules( headLiteral.getVariable() ); }
         static vector< Var > getVariablesOfSupportingRules( const Var headVariable ) { return getVariablesOfSupportingRules( VariableNames::getName( headVariable ) ); }
         static vector< Var > getVariablesOfSupportingRules( const string& headAtom );
+        static vector< pair< string, vector< Literal > > > getSupportingRules( const Literal& headLiteral ) { return getSupportingRules( headLiteral.getVariable() ); }
+        static vector< pair< string, vector< Literal > > > getSupportingRules( const Var headVariable ) { return getSupportingRules( VariableNames::getName( headVariable ) ); }
+        static vector< pair< string, vector< Literal > > > getSupportingRules( const string& headAtom );
 
     private:
         static vector< string > getTerms( const string& term );

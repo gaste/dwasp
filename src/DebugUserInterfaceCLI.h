@@ -45,9 +45,9 @@ public:
 	DebugUserInterfaceCLI() {};
 	~DebugUserInterfaceCLI() {};
 	UserCommand promptCommand();
-	void printCore( const vector< Literal >& core );
-	void printCoreGroundRules( const vector< Literal >& core );
-    void printCoreUngroundRules( const vector< Literal >& core );
+	void printCore( const vector< Literal >& core, const vector< Literal >& coreAssertions );
+	void printCoreGroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions );
+    void printCoreUngroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions );
 	void printHistory( const vector< Literal >& assertionHistory );
 	string askHistoryFilename();
 	TruthValue askTruthValue( const Var variable );

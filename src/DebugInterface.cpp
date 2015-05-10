@@ -63,13 +63,39 @@ DebugInterface::getCoreWithoutAssertions(
 
     for ( const Literal& coreLiteral : unsatCore )
     {
-        if ( !isVariableContainedInLiterals( coreLiteral.getVariable(), assertions ) )
+        if ( !isVariableContainedInLiterals( coreLiteral.getVariable(), assertions )
+          && !isVariableContainedInLiterals( coreLiteral.getVariable(), assertionDebugLiterals ))
         {
             coreWithoutAssertions.push_back( coreLiteral );
         }
     }
 
     return coreWithoutAssertions;
+}
+
+vector< Literal >
+DebugInterface::getCoreAssertions(
+    const vector< Literal >& unsatCore )
+{
+    vector< Literal > coreAssertions;
+
+    for ( const Literal& coreLiteral : unsatCore )
+    {
+        if ( isVariableContainedInLiterals( coreLiteral.getVariable(), assertions ) )
+        {
+            // ensure correct sign
+            for ( const Literal& assertion : assertions )
+                if ( assertion.getVariable() == coreLiteral.getVariable() )
+                    coreAssertions.push_back( assertion );
+        }
+        else if ( isVariableContainedInLiterals( coreLiteral.getVariable(), assertionDebugLiterals ) )
+        {
+            unsigned int sign = RuleNames::getGroundRule( coreLiteral ).find( "not " ) == string::npos ? NEGATIVE : POSITIVE;
+            coreAssertions.push_back( Literal( RuleNames::getVariables( coreLiteral )[ 0 ], sign ) );
+        }
+    }
+
+    return coreAssertions;
 }
 
 void
@@ -113,13 +139,13 @@ DebugInterface::debug()
         switch (userInterface->promptCommand())
         {
         case SHOW_CORE:
-            userInterface->printCore( getCoreWithoutAssertions( minimalUnsatCore ) );
+            userInterface->printCore( getCoreWithoutAssertions( minimalUnsatCore ), getCoreAssertions( minimalUnsatCore ) );
             break;
         case SHOW_CORE_GROUND_RULES:
-            userInterface->printCoreGroundRules( getCoreWithoutAssertions( minimalUnsatCore ) );
+            userInterface->printCoreGroundRules( getCoreWithoutAssertions( minimalUnsatCore ), getCoreAssertions( minimalUnsatCore ) );
             break;
         case SHOW_CORE_NONGROUND_RULES:
-            userInterface->printCoreUngroundRules( getCoreWithoutAssertions( minimalUnsatCore ) );
+            userInterface->printCoreUngroundRules( getCoreWithoutAssertions( minimalUnsatCore ), getCoreAssertions( minimalUnsatCore ) );
             break;
         case SHOW_HISTORY:
             userInterface->printHistory( assertions );
@@ -395,6 +421,7 @@ DebugInterface::determineAssertionDebugLiterals()
             {
                 trace_msg( debug, 2, "Debug atom '" << debugLiteral << "' is assumed to be an assertion. Rule: '" << RuleNames::getRule( debugLiteral ) << "'" );
                 assertionDebugLiterals.push_back( debugLiteral );
+                assumedAssertions.push_back( RuleNames::getLiterals( debugLiteral )[ 0 ].getOppositeLiteral() );
             }
         }
     }
@@ -432,49 +459,113 @@ Var
 DebugInterface::determineQueryVariableUnfounded(
     const vector< Literal >& unsatCore )
 {
-    Var queryVariable = 0;
-    map< Var, unsigned int > variableOccurences;
+    cout << "The core is an unfounded set" << endl;
 
-    trace_msg( debug, 1, "Determining query variables - unfounded case" );
+    vector< Literal > unfoundedAssertions = getCoreAssertions( unsatCore );
+    vector< Literal > visitedAssertions ( unfoundedAssertions );
 
-    for ( const Literal& coreLiteral : unsatCore )
+    trace_msg( debug, 1, "Determining query variables - unfounded assertions = " << Formatter::formatClause( unfoundedAssertions ) );
+
+    while ( !unfoundedAssertions.empty() )
     {
-        Var unfoundedVariable = coreLiteral.getVariable();
+        Literal unfoundedAssertion = unfoundedAssertions.front();
+        unfoundedAssertions.erase( unfoundedAssertions.begin() );
 
-        if ( isVariableContainedInLiterals( unfoundedVariable, assertionDebugLiterals ) )
-        {
-            unfoundedVariable = RuleNames::getVariables( coreLiteral )[ 0 ];
-        }
+        trace_msg( debug, 2, "Unfounded assertion '" << Formatter::formatLiteral( unfoundedAssertion ) << "'" );
+        trace_msg( debug, 3, "Computing supporting rules" );
 
-        trace_msg( debug, 2, "Get rule variables for variable '" << VariableNames::getName( unfoundedVariable ) << "'" );
-        for ( const Var bodyVariable : RuleNames::getVariablesOfSupportingRules( unfoundedVariable ) )
+        vector< pair< string, vector< Literal > > > supportingRules = RuleNames::getSupportingRules( unfoundedAssertion );
+
+        trace_msg( debug, 3, "Found " << supportingRules.size() << " supporting rule(s)" );
+
+        // iterate over each supporting rule and add the unfulfilled body literals to the queue
+        for ( pair< string, vector< Literal > > pair : supportingRules )
         {
-            trace_msg( debug, 3, "Variable: " << VariableNames::getName( bodyVariable ) );
-            variableOccurences[ bodyVariable ] ++;
+            string supportingRule = pair.first;
+            vector< Literal > supportingRuleLiterals = pair.second;
+            vector< Literal > unsatisfiedLiterals;
+
+            trace_msg( debug, 4, "Rule '" << supportingRule << "' with literals " << Formatter::formatClause( supportingRuleLiterals ) );
+
+            for ( const Literal& literal : supportingRuleLiterals )
+            {
+                trace_msg( debug, 5, "Literal '" << Formatter::formatLiteral( literal ) << "': isAssertion = " << isAssertion( literal.getVariable() ) << "; isAssumedAssertion = " << isVariableContainedInLiterals( literal.getVariable(), assumedAssertions ) << "; already visited = " << !isVariableContainedInLiterals( literal.getVariable(), visitedAssertions ));
+                if ( !isAssertion( literal.getVariable() )
+                  && !isVariableContainedInLiterals( literal.getVariable(), assumedAssertions )
+                  && !isVariableContainedInLiterals( literal.getVariable(), visitedAssertions ))
+                {
+                    unsatisfiedLiterals.push_back( literal );
+                }
+            }
+
+            trace_msg( debug, 5, "Unsatisfied literals: " << Formatter::formatClause( unsatisfiedLiterals ) );
+
+            cout << "Possibly supporting rule for atom '" << Formatter::formatLiteral( unfoundedAssertion ) << "':" << endl << "  " << supportingRule << endl;
+
+            if ( !unsatisfiedLiterals.empty() )
+            {
+                for ( const Literal& unsatL : unsatisfiedLiterals )
+                {
+                    TruthValue val = userInterface->askTruthValue( unsatL.getVariable() );
+                    TruthValue satisfyingVal = unsatL.isPositive() ? TRUE : FALSE;
+                    if ( val == satisfyingVal && !isVariableContainedInLiterals( unsatL.getVariable(), visitedAssertions ) )
+                    {
+                        trace_msg( debug, 5, "Adding '" << Formatter::formatLiteral( unsatL ) << "' to the queue." );
+                        unfoundedAssertions.push_back( unsatL );
+                        visitedAssertions.push_back( unsatL );
+                    }
+                }
+
+            }
+
         }
     }
 
-    // return most occuring variable
-    unsigned int maxOccurence = 0;
+    return 0;
 
-    trace_msg( debug, 2, "Iterating over all query variable candidates" );
-    for ( const auto& pair : variableOccurences )
-    {
-        Var currentVariable = pair.first;
-        unsigned int numOccurances = pair.second;
-
-        trace_msg( debug, 3, "Variable '" << VariableNames::getName( currentVariable ) << "' occurs " << numOccurances << " times");
-
-        if ( numOccurances > maxOccurence
-             && !isAssertion( currentVariable )
-             && !isFact( currentVariable ))
-        {
-            maxOccurence = numOccurances;
-            queryVariable = currentVariable;
-        }
-    }
-
-    return queryVariable;
+//    Var queryVariable = 0;
+//    map< Var, unsigned int > variableOccurences;
+//
+//    trace_msg( debug, 1, "Determining query variables - unfounded case" );
+//
+//    for ( const Literal& coreLiteral : unsatCore )
+//    {
+//        Var unfoundedVariable = coreLiteral.getVariable();
+//
+//        if ( isVariableContainedInLiterals( unfoundedVariable, assertionDebugLiterals ) )
+//        {
+//            unfoundedVariable = RuleNames::getVariables( coreLiteral )[ 0 ];
+//        }
+//
+//        trace_msg( debug, 2, "Get rule variables for variable '" << VariableNames::getName( unfoundedVariable ) << "'" );
+//        for ( const Var bodyVariable : RuleNames::getVariablesOfSupportingRules( unfoundedVariable ) )
+//        {
+//            trace_msg( debug, 3, "Variable: " << VariableNames::getName( bodyVariable ) );
+//            variableOccurences[ bodyVariable ] ++;
+//        }
+//    }
+//
+//    // return most occuring variable
+//    unsigned int maxOccurence = 0;
+//
+//    trace_msg( debug, 2, "Iterating over all query variable candidates" );
+//    for ( const auto& pair : variableOccurences )
+//    {
+//        Var currentVariable = pair.first;
+//        unsigned int numOccurances = pair.second;
+//
+//        trace_msg( debug, 3, "Variable '" << VariableNames::getName( currentVariable ) << "' occurs " << numOccurances << " times");
+//
+//        if ( numOccurances > maxOccurence
+//             && !isAssertion( currentVariable )
+//             && !isFact( currentVariable ))
+//        {
+//            maxOccurence = numOccurances;
+//            queryVariable = currentVariable;
+//        }
+//    }
+//
+//    return queryVariable;
 }
 
 Var

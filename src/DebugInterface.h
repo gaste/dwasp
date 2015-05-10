@@ -60,6 +60,7 @@ class DebugInterface
         Var determineQueryVariableFounded( const vector< Literal >& unsatCore );
         unsigned int determineQueryVariableFounded( const vector< Literal >& unsatCore, map< Var, int >& variableEntropy, const vector< Literal >& relaxedLiterals, unsigned int level, const time_t& startTime );
         vector< Literal > getCoreWithoutAssertions( const vector< Literal >& unsatCore );
+        vector< Literal > getCoreAssertions( const vector< Literal >& unsatCore );
         void determineAssertionDebugLiterals();
         void resetSolver();
         unsigned int runSolver( const vector< Literal >& debugAssumptions, const vector< Literal >& assertions );
@@ -79,6 +80,7 @@ class DebugInterface
         vector< Var > facts;
         vector< Literal > debugLiterals;
         vector< Literal > assertionDebugLiterals;
+        vector< Literal > assumedAssertions;
         vector< Literal > consideredDebugLiterals;
         vector< Literal > assertions;
 };

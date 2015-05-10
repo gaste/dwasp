@@ -52,9 +52,9 @@ class DebugUserInterface
 public:
 	virtual ~DebugUserInterface() = 0;
 	virtual UserCommand promptCommand() = 0;
-	virtual void printCore( const vector< Literal >& core ) = 0;
-	virtual void printCoreGroundRules( const vector< Literal >& core ) = 0;
-	virtual void printCoreUngroundRules( const vector< Literal >& core ) = 0;
+	virtual void printCore( const vector< Literal >& core, const vector< Literal >& coreAssertions ) = 0;
+	virtual void printCoreGroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions ) = 0;
+	virtual void printCoreUngroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions ) = 0;
 	virtual void printHistory( const vector< Literal >& assertionHistory ) = 0;
 	virtual string askHistoryFilename() = 0;
 	virtual TruthValue askTruthValue( const Var variable ) = 0;

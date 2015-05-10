@@ -83,14 +83,16 @@ DebugUserInterfaceCLI::printHelp()
 
 void
 DebugUserInterfaceCLI::printCore(
-    const vector< Literal >& core )
+    const vector< Literal >& core,
+    const vector< Literal >& coreAssertions )
 {
-    OutputPager::paginate( Formatter::formatClause( core ) + "\n" );
+    OutputPager::paginate( "rules = " + Formatter::formatClause( core ) + "\nassertions = " + Formatter::formatClause( coreAssertions ) );
 }
 
 void
 DebugUserInterfaceCLI::printCoreGroundRules(
-    const vector< Literal >& core )
+    const vector< Literal >& core,
+    const vector< Literal >& coreAssertions )
 {
     string groundCoreRules = "";
     if ( !core.empty() )
@@ -101,12 +103,15 @@ DebugUserInterfaceCLI::printCoreGroundRules(
         }
     }
 
-    OutputPager::paginate( groundCoreRules );
+    OutputPager::paginate(
+            (!core.empty() ? "rules:\n" + groundCoreRules : "no rules\n") +
+            "assertions = " + Formatter::formatClause( coreAssertions ) );
 }
 
 void
 DebugUserInterfaceCLI::printCoreUngroundRules(
-    const vector< Literal >& core )
+    const vector< Literal >& core,
+    const vector< Literal >& coreAssertions )
 {
     string coreUngroundRules = "";
     map< string, vector< string > > ruleSubstitutionMap;
@@ -132,7 +137,9 @@ DebugUserInterfaceCLI::printCoreUngroundRules(
         }
     }
 
-    OutputPager::paginate( coreUngroundRules );
+    OutputPager::paginate(
+            (!core.empty() ? "rules:\n" + coreUngroundRules : "no rules\n") +
+            "assertions = " + Formatter::formatClause( coreAssertions ) );
 }
 
 void

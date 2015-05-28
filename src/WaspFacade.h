@@ -22,10 +22,12 @@
 #include <cassert>
 #include <vector>
 #include <unordered_map>
+#include <fstream>
 using namespace std;
 
 #include "util/Constants.h"
 #include "Solver.h"
+#include "DebugInterface.h"
 #include "input/Dimacs.h"
 #include "weakconstraints/WeakInterface.h"
 #include "weakconstraints/Mgd.h"
@@ -38,7 +40,7 @@ class WaspFacade
 {
     public:
         inline WaspFacade();
-        inline ~WaspFacade(){}
+        inline ~WaspFacade(){ delete debugInterface; }
         
         void readInput();
         void solve();
@@ -65,13 +67,17 @@ class WaspFacade
         
         inline unsigned int solveWithWeakConstraints();        
 
+        inline void enableDebug( string debugFilename );
+
     private:
         Solver solver;
-        
+        DebugInterface* debugInterface;
+        istream* inputStream;
+
         unsigned int numberOfModels;
         unsigned int maxModels;
         bool printProgram;
-        bool printDimacs;        
+        bool printDimacs;
 
         WEAK_CONSTRAINTS_ALG weakConstraintsAlg;
         bool disjCoresPreprocessing;
@@ -80,8 +86,34 @@ class WaspFacade
         unsigned int queryAlgorithm;
 };
 
-WaspFacade::WaspFacade() : numberOfModels( 0 ), maxModels( 1 ), printProgram( false ), printDimacs( false ), weakConstraintsAlg( OPT ), disjCoresPreprocessing( false ), stratification( true )
-{   
+WaspFacade::WaspFacade()
+: debugInterface( NULL ),
+  inputStream( &cin ),
+  numberOfModels( 0 ),
+  maxModels( 1 ),
+  printProgram( false ),
+  printDimacs( false ),
+  weakConstraintsAlg( OPT ),
+  disjCoresPreprocessing( false ),
+  stratification( true )
+{
+}
+
+void
+WaspFacade::enableDebug(
+    string debugFilename )
+{
+    if( debugFilename.length() != 0 )
+    {
+        inputStream = new ifstream( debugFilename );
+
+        if ( !inputStream->good() )
+            ErrorMessage::errorDuringParsing( "Could not open the debug input file '" + debugFilename + "'" );
+
+        trace_msg( debug, 1, "Using file '" << debugFilename << "' as input for the logic program." );
+
+        debugInterface = new DebugInterface( solver );
+    }
 }
 
 unsigned int

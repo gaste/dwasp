@@ -16,41 +16,21 @@
  *
  */
 
-#include <cstdlib>
-#include <csignal>
+#ifndef UTIL_OUTPUTPAGER_H
+#define UTIL_OUTPUTPAGER_H
 
-#include "WaspFacade.h"
-#include "util/Options.h"
-
-// required for minGW
-#ifndef SIGXCPU
-#define SIGXCPU 24
-#endif
+#include <string>
 
 using namespace std;
 
-int EXIT_CODE = 0;
-
-void my_handler( int )
+class OutputPager
 {
-    cerr << "Killed: Bye!" << endl;
-    EXIT_CODE = 11;
-    exit( EXIT_CODE );
-}
+    public:
+        static void paginate( const string& output );
+        static void setPageSize ( const int& size );
 
-int main( int argc, char** argv )
-{
-    wasp::Options::parse( argc, argv );
-    WaspFacade waspFacade;
-    wasp::Options::setOptions( waspFacade );        
-    
-    signal( SIGINT, my_handler );
-    signal( SIGTERM, my_handler );
-    signal( SIGXCPU, my_handler );
-    
-    waspFacade.readInput();
-    waspFacade.solve();
-    waspFacade.onFinish();    
-    return EXIT_CODE;
-}
+    private:
+        static unsigned int pageSize;
+};
 
+#endif /* UTIL_OUTPUTPAGER_H */

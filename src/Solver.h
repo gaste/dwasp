@@ -711,7 +711,7 @@ Solver::solve(
         else
         {
             if( minimizeUnsatCore_ )
-                minimizeUnsatCore( assumptions );            
+                minimizeUnsatCore( assumptions );
         }
     }
     clearAfterSolveUnderAssumptions( assumptions );
@@ -2430,7 +2430,7 @@ Solver::minimizeUnsatCore(
     #endif
     ( !hasPropagators() ) ? solveWithoutPropagators( assumptions ) : solvePropagators( assumptions );
     assert( result == INCOHERENT );
-    
+
     if( unsatCore == NULL )
         unsatCore = new Clause();
     
@@ -2516,4 +2516,3 @@ Solver::simplifyOptimizationLiterals(
 //}
 
 #endif
-

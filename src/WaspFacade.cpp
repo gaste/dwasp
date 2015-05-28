@@ -36,14 +36,16 @@ void
 WaspFacade::readInput()
 {
     char tmp;
-    cin >> tmp;
 
-    if( !cin.good() && !cin.eof() )
-    {   
-        ErrorMessage::errorDuringParsing( "Unexpected symbol." );
-    }    
+    *inputStream >> tmp;
 
-    cin.putback( tmp );
+	if( !inputStream->good() && !inputStream->eof() )
+	{
+		ErrorMessage::errorDuringParsing( "Unexpected symbol." );
+	}
+
+	inputStream->putback( tmp );
+
     switch ( tmp )
     {
         case COMMENT_DIMACS:
@@ -61,8 +63,15 @@ WaspFacade::readInput()
 
         default:
         {
-            GringoNumericFormat gringo( solver );
-            gringo.parse();
+            Istream in ( *inputStream );
+            GringoNumericFormat gringo( solver, debugInterface );
+            gringo.parse( in );
+
+            if( debugInterface != NULL ) {
+                debugInterface->readDebugMapping( in );
+                solver.disableVariableElimination();
+            }
+
 //            solver.setOutputBuilder( new WaspOutputBuilder() );
             greetings();
             break;
@@ -84,6 +93,12 @@ WaspFacade::solve()
         if( printDimacs )
         {
             solver.printDimacs();
+            return;
+        }
+
+        if( debugInterface != NULL )
+        {
+            debugInterface->debug();
             return;
         }
         

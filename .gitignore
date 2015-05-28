@@ -3,6 +3,7 @@
 *.lo
 *.o
 *.d
+*.exe
 build
 
 # Compiled Dynamic libraries
@@ -20,3 +21,15 @@ build
 # gprof files
 gmon.out
 gprof.*
+
+# Windows files
+Thumbs.db
+Desktop.ini
+
+# Ecipse project files
+.project
+.cproject
+.settings/
+
+# GDB init file
+.gdbinit

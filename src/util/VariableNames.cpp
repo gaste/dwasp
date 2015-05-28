@@ -47,6 +47,29 @@ VariableNames::getName(
     return variables[ v ];
 }
 
+const bool
+VariableNames::getVariable (
+	const string& name,
+	Var& v )
+{
+	for ( unsigned int i = 0; i < variables.size(); i++ )
+	{
+		if ( variables[i].compare( name ) == 0 )
+		{
+			v = i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+const vector< string >&
+VariableNames::getVariableNames()
+{
+    return variables;
+}
+
 void
 VariableNames::setName(
     Var v,

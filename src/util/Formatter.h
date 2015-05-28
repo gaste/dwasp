@@ -16,41 +16,21 @@
  *
  */
 
-#include <cstdlib>
-#include <csignal>
+#ifndef FORMATTER_H
+#define FORMATTER_H
 
-#include "WaspFacade.h"
-#include "util/Options.h"
+#include <string>
+#include <vector>
 
-// required for minGW
-#ifndef SIGXCPU
-#define SIGXCPU 24
-#endif
+#include "../Literal.h"
 
 using namespace std;
 
-int EXIT_CODE = 0;
-
-void my_handler( int )
+class Formatter
 {
-    cerr << "Killed: Bye!" << endl;
-    EXIT_CODE = 11;
-    exit( EXIT_CODE );
-}
+    public:
+        static string formatLiteral( const Literal& literal );
+        static string formatClause( const vector< Literal >& clause );
+};
 
-int main( int argc, char** argv )
-{
-    wasp::Options::parse( argc, argv );
-    WaspFacade waspFacade;
-    wasp::Options::setOptions( waspFacade );        
-    
-    signal( SIGINT, my_handler );
-    signal( SIGTERM, my_handler );
-    signal( SIGXCPU, my_handler );
-    
-    waspFacade.readInput();
-    waspFacade.solve();
-    waspFacade.onFinish();    
-    return EXIT_CODE;
-}
-
+#endif /* FORMATTER_H */

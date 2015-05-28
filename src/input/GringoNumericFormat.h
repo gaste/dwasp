@@ -20,6 +20,7 @@
 #define GRINGONUMERICFORMAT_H
 
 #include "../Solver.h"
+#include "../DebugInterface.h"
 #include "../stl/Trie.h"
 #include "../util/Istream.h"
 #include <unordered_set>
@@ -29,7 +30,7 @@ using namespace std;
 class GringoNumericFormat
 {
 public:
-    inline GringoNumericFormat( Solver& s );
+    inline GringoNumericFormat( Solver& s, DebugInterface* d );
     inline ~GringoNumericFormat();
 
     /**
@@ -436,6 +437,7 @@ private:
 //    Literal getLiteralForAuxVar( unsigned int id, unsigned int sign );
 
     Solver& solver;
+    DebugInterface* debugInterface;
     
     Trie bodiesDictionary;
     
@@ -499,7 +501,8 @@ private:
 };
 
 GringoNumericFormat::GringoNumericFormat(
-    Solver& s ) : solver( s ), propagatedLiterals( 0 ), readNormalRule_numberOfCalls( 0 ), usedDictionary( false )
+    Solver& s,
+    DebugInterface* d ) : solver( s ), debugInterface( d ), propagatedLiterals( 0 ), readNormalRule_numberOfCalls( 0 ), usedDictionary( false )
 {
     atomData.push_back( AtomData( false ) );
     createStructures( 1 );

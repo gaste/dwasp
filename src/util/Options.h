@@ -90,6 +90,8 @@ namespace wasp
             static WEAK_CONSTRAINTS_ALG getAlgorithm( const string& s );
             
             static void initMap();
+
+            static string debug;
     };
 }
 

@@ -1020,18 +1020,30 @@ GringoNumericFormat::readAtomsTable(
     input.read( nextAtom );
 
     char name[ 1024 ];
+    string debug("_debug");
     while( nextAtom != 0 )
     {
 //        assert_msg( nextAtom < inputVarId.size(), "nextAtom = " << nextAtom << "; size = " << inputVarId.size() );
 //        assert( inputVarId[ nextAtom ] > 1 );        
         createStructures( nextAtom );
         input.getline( name, 1024 );
-        VariableNames::setName( nextAtom, name );
+        VariableNames::setName( nextAtom, name );        
         trace_msg( parser, 6, "Set name " << name << " for atom " << nextAtom );
         
         if( wasp::Options::queryAlgorithm != NO_QUERY )
             solver.setFrozen( nextAtom );
-        input.read( nextAtom );        
+
+        if( debugInterface != NULL )
+        {
+            string strName( name );
+            if( strName.length() > debug.length() && strName.compare( 0, 6, debug ) == 0 )
+            {
+                solver.setFrozen( nextAtom );
+                debugInterface->addDebugLiteral( Literal( nextAtom ) );
+            }
+        }
+
+        input.read( nextAtom );
     }
 
 //    #ifdef TRACE_ON

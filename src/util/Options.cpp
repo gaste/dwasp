@@ -48,6 +48,7 @@ namespace wasp
 #define OPTIONID_trace_satelite ( 'z' + 8 )
 #define OPTIONID_trace_aggregates ( 'z' + 9 )
 #define OPTIONID_trace_weakconstraints ( 'z' + 10 )
+#define OPTIONID_trace_debug ( 'z' + 11 )
 
 /* OUTPUT OPTIONS */
 #define OPTIONID_silent ( 'z' + 20 )
@@ -86,6 +87,7 @@ namespace wasp
 #define OPTIONID_forward_partialchecks ( 'z' + 104 )
 #define OPTIONID_bumpactivityafterpartialchecks ( 'z' + 105 )
 #define OPTIONID_backward_partialchecks ( 'z' + 106 )
+#define OPTIONID_debug ( 'z' + 107 )
     
 /* WEAK CONSTRAINTS OPTIONS */
 #define OPTIONID_weakconstraintsalgorithm ( 'z' + 200 )
@@ -150,6 +152,7 @@ unsigned int Options::queryAlgorithm = NO_QUERY;
 unsigned int Options::queryVerbosity = 0;
 
 map< string, WEAK_CONSTRAINTS_ALG > Options::stringToWeak;
+string Options::debug = "";
     
 void
 Options::parse(
@@ -183,6 +186,7 @@ Options::parse(
                 { "trace-satelite", required_argument, NULL, OPTIONID_trace_satelite },
                 { "trace-aggregates", required_argument, NULL, OPTIONID_trace_aggregates },
                 { "trace-weakconstraints", required_argument, NULL, OPTIONID_trace_weakconstraints },
+				{ "trace-debug", required_argument, NULL, OPTIONID_trace_debug },
 
                 /* OUTPUT OPTIONS */
                 { "competition-output", no_argument, NULL, OPTIONID_competition_output },
@@ -218,6 +222,7 @@ Options::parse(
                 { "stdin", no_argument, NULL, OPTIONID_stdin },
                 { "time-limit", required_argument, NULL, OPTIONID_time_limit },
                 { "max-cost", required_argument, NULL, OPTIONID_max_cost },
+                { "debug", required_argument, NULL, OPTIONID_debug },
                 
                 { "exchange-clauses", no_argument, NULL, OPTIONID_exchange_clauses },
                 { "forward-partialchecks", no_argument, NULL, OPTIONID_forward_partialchecks },  
@@ -298,6 +303,10 @@ Options::parse(
             case OPTIONID_trace_weakconstraints:
                 setTraceLevel( weakconstraints, atoi( optarg ) );
                 break;
+
+            case OPTIONID_trace_debug:
+            	setTraceLevel( debug, atoi( optarg ) );
+            	break;
 
             case OPTIONID_competition_output:
                 outputPolicy = COMPETITION_OUTPUT;
@@ -464,6 +473,10 @@ Options::parse(
             case OPTIONID_stratification:
                 stratification = false;
                 break;
+
+            case OPTIONID_debug:
+            	debug.append( optarg );
+                break;
                 
             case OPTIONID_queryalgorithm:
                 queryAlgorithm = ITERATIVE_COHERENCE_TESTING;
@@ -521,6 +534,7 @@ Options::setOptions(
     waspFacade.setMinimizeUnsatCore( minimizeUnsatCore );
     waspFacade.setStratification( stratification );
     waspFacade.setQueryAlgorithm( queryAlgorithm );
+    waspFacade.enableDebug(debug);
 }
 
 WEAK_CONSTRAINTS_ALG
@@ -543,7 +557,7 @@ Options::initMap()
     stringToWeak[ "pmres" ] = PMRES;
     stringToWeak[ "basic" ] = BB;
     stringToWeak[ "interleaving-restarts" ] = OLLBBREST;
-    stringToWeak[ "interleaving-choices" ] = OLLBB;    
+    stringToWeak[ "interleaving-choices" ] = OLLBB;
 }
 
 };

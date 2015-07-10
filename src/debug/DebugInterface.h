@@ -1,6 +1,7 @@
 /*
  *
- *  Copyright 2013 Mario Alviano, Carmine Dodaro, and Francesco Ricca.
+ *  Copyright 2015 Mario Alviano, Carmine Dodaro, Francesco Ricca, and Philip
+ *  Gasteiger.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,18 +25,14 @@
 #include <string>
 #include <vector>
 
-#include "util/Constants.h"
+#include "../Literal.h"
+#include "../util/Constants.h"
+#include "DebugUserInterfaceCLI.h"
+#include "QuickXPlain.h"
 
 class Istream;
 
 using namespace std;
-
-#include "Literal.h"
-#include "Clause.h"
-#include "QuickXPlain.h"
-#include "DebugUserInterface.h"
-#include "DebugUserInterfaceCLI.h"
-#include "util/Istream.h"
 
 #define DEBUG_MAP_ENTRY 10
 #define DEBUG_MAP_LINE_SEPARATOR 0

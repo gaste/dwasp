@@ -1,6 +1,7 @@
 /*
  *
- *  Copyright 2013 Mario Alviano, Carmine Dodaro, and Francesco Ricca.
+ *  Copyright 2015 Mario Alviano, Carmine Dodaro, Francesco Ricca, and Philip
+ *  Gasteiger.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,11 +22,10 @@
 
 #include <vector>
 
-#include "Clause.h"
+#include "../Clause.h"
+#include "../Literal.h"
 
 using namespace std;
-
-#include "Literal.h"
 
 class Solver;
 

@@ -27,7 +27,7 @@ using namespace std;
 
 #include "util/Constants.h"
 #include "Solver.h"
-#include "DebugInterface.h"
+#include "debug/DebugInterface.h"
 #include "input/Dimacs.h"
 #include "weakconstraints/WeakInterface.h"
 #include "weakconstraints/Mgd.h"

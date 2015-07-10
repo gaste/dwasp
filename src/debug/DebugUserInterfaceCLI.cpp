@@ -1,6 +1,7 @@
 /*
  *
- *  Copyright 2013 Mario Alviano, Carmine Dodaro, and Francesco Ricca.
+ *  Copyright 2015 Mario Alviano, Carmine Dodaro, Francesco Ricca, and Philip
+ *  Gasteiger.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,10 +25,10 @@
 #include <iterator>
 #include <utility>
 
-#include "util/Formatter.h"
-#include "util/OutputPager.h"
-#include "util/RuleNames.h"
-#include "util/VariableNames.h"
+#include "../util/Formatter.h"
+#include "../util/OutputPager.h"
+#include "../util/RuleNames.h"
+#include "../util/VariableNames.h"
 
 map< string, cmd > DebugUserInterfaceCLI::commandMap =
 {

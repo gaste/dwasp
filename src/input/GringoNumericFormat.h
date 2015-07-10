@@ -20,7 +20,7 @@
 #define GRINGONUMERICFORMAT_H
 
 #include "../Solver.h"
-#include "../DebugInterface.h"
+#include "../debug/DebugInterface.h"
 #include "../stl/Trie.h"
 #include "../util/Istream.h"
 #include <unordered_set>

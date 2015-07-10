@@ -1,6 +1,7 @@
 /*
  *
- *  Copyright 2013 Mario Alviano, Carmine Dodaro, and Francesco Ricca.
+ *  Copyright 2015 Mario Alviano, Carmine Dodaro, Francesco Ricca, and Philip
+ *  Gasteiger.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,19 +21,22 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#include <string>
 #include <utility>
 
-#include "Solver.h"
-#include "util/ErrorMessage.h"
-#include "util/Formatter.h"
-#include "util/RuleNames.h"
-#include "util/Trace.h"
-#include "util/VariableNames.h"
+#include "../Clause.h"
+#include "../Solver.h"
+#include "../util/ErrorMessage.h"
+#include "../util/Formatter.h"
+#include "../util/Istream.h"
+#include "../util/RuleNames.h"
+#include "../util/Trace.h"
+#include "../util/VariableNames.h"
+#include "DebugUserInterface.h"
 
 #define QUERY_DETERMINATION_TIMEOUT 3
 

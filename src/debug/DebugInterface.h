@@ -20,14 +20,14 @@
 #ifndef DEBUGINTERFACE_H
 #define DEBUGINTERFACE_H
 
-#include <ctime>
+#include <time.h>
 #include <map>
 #include <string>
 #include <vector>
 
 #include "../Literal.h"
 #include "../util/Constants.h"
-#include "DebugUserInterfaceCLI.h"
+#include "DebugUserInterfaceGUI.h"
 #include "QuickXPlain.h"
 
 class Istream;
@@ -45,7 +45,7 @@ class Solver;
 class DebugInterface
 {    
 	public:
-        inline DebugInterface( Solver& s ) : solver( s ), coreMinimizer( s ), userInterface( new DebugUserInterfaceCLI() ) {}
+        inline DebugInterface( Solver& s ) : solver( s ), coreMinimizer( s ), userInterface( new DebugUserInterfaceGUI() ) {}
         void addDebugLiteral( Literal l ) { debugLiterals.push_back( l ); consideredDebugLiterals.push_back( l ); }
         void readDebugMapping( Istream& stream );
         void debug();

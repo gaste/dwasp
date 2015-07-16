@@ -73,7 +73,8 @@ WaspFacade::readInput()
             }
 
 //            solver.setOutputBuilder( new WaspOutputBuilder() );
-            greetings();
+
+            if ( debugInterface == NULL ) greetings();
             break;
         }
     }

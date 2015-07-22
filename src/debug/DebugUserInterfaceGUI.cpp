@@ -26,18 +26,31 @@
 #define MESSAGE_DELIMITER '\n'
 
 #define REQUEST_GET_CORE "get:core"
+#define REQUEST_GET_QUERY "get:query"
+#define REQUEST_ASSERT "assert"
+#define REQUEST_ASSERT_LENGTH 6
 #define RESPONSE_CORE "response:core"
-#define REQUEST_GET_TRUTH_VALUE "get:truthvalue"
+#define RESPONSE_QUERY "response:query"
+
+#define ASSERT_TRUE 'y'
+#define ASSERT_FALSE 'n'
+#define ASSERT_UNDEFINED 'u'
 
 UserCommand
 DebugUserInterfaceGUI::promptCommand()
 {
     string message;
 
+    if ( cin.eof() ) return UserCommand::EXIT;
+
     getline( cin, message, MESSAGE_DELIMITER );
 
+    lastMessage = message;
+
     if ( REQUEST_GET_CORE == message ) return UserCommand::SHOW_CORE;
-    else return UserCommand::ASK_QUERY;
+    if ( REQUEST_GET_QUERY == message ) return UserCommand::ASK_QUERY;
+    if ( REQUEST_ASSERT == message.substr( 0, REQUEST_ASSERT_LENGTH ) ) return UserCommand::ASSERT_VARIABLE;
+    else return UserCommand::EXIT;
 }
 
 void
@@ -59,10 +72,79 @@ TruthValue
 DebugUserInterfaceGUI::askTruthValue(
     const Var variable )
 {
-    cout << REQUEST_GET_TRUTH_VALUE << VariableNames::getName(variable) << MESSAGE_DELIMITER;
+    //cout << RESPONSE_QUERY << PART_DELIMITER << VariableNames::getName(variable) << MESSAGE_DELIMITER;
 
-    string response;
-    getline( cin, response, MESSAGE_DELIMITER );
+    //string response;
+    //getline( cin, response, MESSAGE_DELIMITER );
 
     return UNDEFINED;
+}
+
+void
+DebugUserInterfaceGUI::queryResponse(
+    const vector< Var >& variables )
+{
+    cout << RESPONSE_QUERY;
+
+    for ( const Var v : variables )
+    {
+        cout << PART_DELIMITER << VariableNames::getName( v );
+    }
+
+    cout << MESSAGE_DELIMITER;
+}
+
+Literal
+DebugUserInterfaceGUI::getAssertion()
+{
+    return Literal::null;
+}
+
+std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
+
+vector< Literal >
+DebugUserInterfaceGUI::getAssertions()
+{
+    vector< Literal > userAssertions;
+
+    if ( REQUEST_ASSERT == lastMessage.substr( 0, REQUEST_ASSERT_LENGTH ) )
+    {
+        vector< string > elems = split( lastMessage, PART_DELIMITER );
+
+        // remove the first message part which is the identifier
+        elems.erase( elems.begin() );
+
+        for ( const string& e : elems )
+        {
+            if ( e[ e.length() - 1 ] != ASSERT_UNDEFINED )
+            {
+                Var var;
+
+                if ( VariableNames::getVariable( e.substr( 0, e.length() - 2 ), var ) )
+                {
+                    unsigned int sign;
+
+                    if ( e[ e.length() - 1 ] == ASSERT_TRUE ) sign = POSITIVE;
+                    if ( e[ e.length() - 1 ] == ASSERT_FALSE ) sign = NEGATIVE;
+
+                    userAssertions.push_back( Literal( var, sign ) );
+                }
+            }
+        }
+    }
+
+    return userAssertions;
 }

@@ -45,7 +45,9 @@ public:
     void printHistory( const vector< Literal >& assertionHistory ) {};
     string askHistoryFilename() { return ""; };
     TruthValue askTruthValue( const Var variable );
-    Literal getAssertion() { return Literal::null; };
+    void queryResponse( const vector< Var >& variables );
+    Literal getAssertion();
+    vector< Literal > getAssertions();
     unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory ) { return 0; };
     void greetUser() {};
     void informSolving() {};
@@ -59,6 +61,9 @@ public:
     void informAssertionIsFact( const string& variable ) {};
     void informNoQueryPossible() {};
     void informProgramCoherent() {};
+
+private:
+    string lastMessage;
 };
 
 #endif /* DEBUGUSERINTERFACEPROTOCOLBUFFERS_H */

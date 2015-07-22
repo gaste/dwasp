@@ -201,71 +201,104 @@ DebugInterface::debug()
         }
         case ASSERT_VARIABLE:
         {
-            Literal assertion = userInterface->getAssertion();
-
-            if ( isAssertion( assertion.getVariable() ) )
+            for ( const Literal& assertion : userInterface->getAssertions() )
             {
-                userInterface->informAssertionAlreadyPresent( VariableNames::getName( assertion.getVariable() ) );
-            } else if ( isFact( assertion.getVariable() ) )
-            {
-                userInterface->informAssertionIsFact( VariableNames::getName( assertion.getVariable() ) );
-            }
-            else
-            {
-                assertions.push_back( assertion );
-
-                userInterface->informSolving();
-
-                if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
+                if ( isAssertion( assertion.getVariable() ) )
                 {
-                    resetSolver();
-                    assert( solver.getUnsatCore() != NULL );
-                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
+                    userInterface->informAssertionAlreadyPresent( VariableNames::getName( assertion.getVariable() ) );
+                }
+                else if ( isFact( assertion.getVariable() ) )
+                {
+                    userInterface->informAssertionIsFact( VariableNames::getName( assertion.getVariable() ) );
                 }
                 else
                 {
-                    userInterface->informProgramCoherent();
-                    continueDebugging = false;
+                    assertions.push_back( assertion );
                 }
             }
+
+            userInterface->informSolving();
+
+            if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
+            {
+                resetSolver();
+                assert( solver.getUnsatCore() != NULL );
+                minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
+            }
+            else
+            {
+                userInterface->informProgramCoherent();
+                continueDebugging = false;
+            }
+
+//            Literal assertion = userInterface->getAssertion();
+//
+//            if ( isAssertion( assertion.getVariable() ) )
+//            {
+//                userInterface->informAssertionAlreadyPresent( VariableNames::getName( assertion.getVariable() ) );
+//            } else if ( isFact( assertion.getVariable() ) )
+//            {
+//                userInterface->informAssertionIsFact( VariableNames::getName( assertion.getVariable() ) );
+//            }
+//            else
+//            {
+//                assertions.push_back( assertion );
+//
+//                userInterface->informSolving();
+//
+//                if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
+//                {
+//                    resetSolver();
+//                    assert( solver.getUnsatCore() != NULL );
+//                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
+//                }
+//                else
+//                {
+//                    userInterface->informProgramCoherent();
+//                    continueDebugging = false;
+//                }
+//            }
             break;
         }
         case ASK_QUERY:
         {
             userInterface->informComputingQueryVariable();
-            Var queryVariable = determineQueryVariable( minimalUnsatCore );
-            TruthValue queryVariableTruthValue = UNDEFINED;
+            vector< Var > queryVariables = determineQueryVariable( minimalUnsatCore );
 
-            if ( queryVariable == 0 )
-            {
-                userInterface->informNoQueryPossible();
-            }
-            else
-            {
-                queryVariableTruthValue = userInterface->askTruthValue( queryVariable );
-            }
+            userInterface->queryResponse( queryVariables );
 
-
-            if ( queryVariableTruthValue != UNDEFINED )
-            {
-                resetSolver();
-                Literal assertion( queryVariable, queryVariableTruthValue == TRUE ? POSITIVE : NEGATIVE );
-                assertions.push_back( assertion );
-
-                userInterface->informSolving();
-
-                if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
-                {
-                    resetSolver();
-                    assert( solver.getUnsatCore() != NULL );
-                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
-                }
-                else
-                {
-                    userInterface->informProgramCoherent();
-                    continueDebugging = false;
-                }
-            }
+//            TruthValue queryVariableTruthValue = UNDEFINED;
+//
+//            if ( queryVariables.empty() )
+//            {
+//                userInterface->informNoQueryPossible();
+//            }
+//            else
+//            {
+//                queryVariableTruthValue = userInterface->askTruthValue( queryVariables[ 0 ] );
+//            }
+//
+//
+//            if ( queryVariableTruthValue != UNDEFINED )
+//            {
+//                resetSolver();
+//                Literal assertion( queryVariables[ 0 ], queryVariableTruthValue == TRUE ? POSITIVE : NEGATIVE );
+//                assertions.push_back( assertion );
+//
+//                userInterface->informSolving();
+//
+//                if ( runSolver( consideredDebugLiterals, assertions ) == INCOHERENT )
+//                {
+//                    resetSolver();
+//                    assert( solver.getUnsatCore() != NULL );
+//                    minimalUnsatCore = coreMinimizer.minimizeUnsatCore( *solver.getUnsatCore() );
+//                }
+//                else
+//                {
+//                    userInterface->informProgramCoherent();
+//                    continueDebugging = false;
+//                }
+//            }
             break;
         }
         case UNDO_ASSERTION:
@@ -447,12 +480,13 @@ DebugInterface::runSolver(
     return solver.solve( assumptions );
 }
 
-Var
+vector< Var >
 DebugInterface::determineQueryVariable(
     const vector< Literal >& unsatCore )
 {
     if ( isUnfoundedCore( unsatCore ) )
-        return determineQueryVariableUnfounded( unsatCore );
+        //return determineQueryVariableUnfounded( unsatCore );
+        return vector< Var >();
     else
         return determineQueryVariableFounded( unsatCore );
 }
@@ -570,11 +604,32 @@ DebugInterface::determineQueryVariableUnfounded(
 //    return queryVariable;
 }
 
-Var
+class VariableComparator {
+private:
+    map< Var, int > variableEntropy;
+    map< Var, unsigned int > variableOccurences;
+
+public:
+    VariableComparator(
+        map< Var, int > variableEntropy,
+        map< Var, unsigned int > variableOccurences )
+    : variableEntropy( variableEntropy ), variableOccurences( variableOccurences ) {}
+
+    bool operator () (
+        Var v1,
+        Var v2 )
+    {
+        if ( variableEntropy[ v1 ] == variableEntropy[ v2 ])
+            return variableOccurences[ v1 ] > variableOccurences[ v2 ];
+        else
+            return variableEntropy[ v1 ] < variableEntropy[ v2 ];
+    }
+};
+
+vector< Var >
 DebugInterface::determineQueryVariableFounded(
     const vector< Literal >& unsatCore )
 {
-    Var queryVariable = 0;
     map< Var, int > variableEntropy;
     map< Var, unsigned int > variableOccurences;
 
@@ -582,7 +637,6 @@ DebugInterface::determineQueryVariableFounded(
     trace_msg( debug, 2, "Relaxing core variables and computing models" );
 
     unsigned int numModels = determineQueryVariableFounded( unsatCore, variableEntropy, consideredDebugLiterals, 3, time( NULL ) );
-    unsigned int lowestEntropy = numModels + 1;
 
     trace_msg( debug, 2, "Found " << numModels << " models" );
 
@@ -605,25 +659,23 @@ DebugInterface::determineQueryVariableFounded(
     }
 #endif
 
+    vector< Var > queryVariables;
+
     for ( auto const& pair : variableOccurences )
     {
         Var variable = pair.first;
-        unsigned int entropy = abs( variableEntropy[ variable ] );
 
-        if ( (entropy < lowestEntropy
-                || (entropy == lowestEntropy
-                    && variableOccurences[ variable ]
-                     > variableOccurences[ queryVariable ]))
-             && !isAssertion( variable )
-             && !isFact( variable ) )
+        if ( !isAssertion( variable ) && !isFact( variable ) )
         {
-            queryVariable = variable;
-            lowestEntropy = entropy;
+            queryVariables.push_back( variable );
         }
     }
 
-    return queryVariable;
+    sort( queryVariables.begin(), queryVariables.end(), VariableComparator( variableEntropy, variableOccurences ) );
+
+    return queryVariables;
 }
+
 
 unsigned int
 DebugInterface::determineQueryVariableFounded(

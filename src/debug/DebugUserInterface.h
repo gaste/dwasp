@@ -58,9 +58,11 @@ public:
 	virtual void printCoreGroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions ) = 0;
 	virtual void printCoreUngroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions ) = 0;
 	virtual void printHistory( const vector< Literal >& assertionHistory ) = 0;
+	virtual void queryResponse( const vector< Var >& variables ) = 0;
 	virtual string askHistoryFilename() = 0;
 	virtual TruthValue askTruthValue( const Var variable ) = 0;
 	virtual Literal getAssertion() = 0;
+	virtual vector< Literal > getAssertions() = 0;
 	virtual unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory ) = 0;
 	virtual void greetUser() = 0;
 	virtual void informSolving() = 0;

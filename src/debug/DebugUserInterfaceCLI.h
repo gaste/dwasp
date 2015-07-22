@@ -52,6 +52,7 @@ public:
 	void printHistory( const vector< Literal >& assertionHistory );
 	string askHistoryFilename();
 	TruthValue askTruthValue( const Var variable );
+	void queryResponse( const vector< Var >& variables ) {};
 	Literal getAssertion();
 	unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory );
     void greetUser();

@@ -50,7 +50,8 @@ DebugUserInterfaceGUI::promptCommand()
     if ( REQUEST_GET_CORE == message ) return UserCommand::SHOW_CORE;
     if ( REQUEST_GET_QUERY == message ) return UserCommand::ASK_QUERY;
     if ( REQUEST_ASSERT == message.substr( 0, REQUEST_ASSERT_LENGTH ) ) return UserCommand::ASSERT_VARIABLE;
-    else return UserCommand::EXIT;
+
+    return UserCommand::EXIT;
 }
 
 void
@@ -59,6 +60,11 @@ DebugUserInterfaceGUI::printCore(
     const vector< Literal >& coreAssertions )
 {
     cout << RESPONSE_CORE;
+
+    if ( core.empty() )
+    {
+        cout << PART_DELIMITER;
+    }
 
     for ( const Literal& coreElement : core )
     {
@@ -85,6 +91,11 @@ DebugUserInterfaceGUI::queryResponse(
     const vector< Var >& variables )
 {
     cout << RESPONSE_QUERY;
+
+    if ( variables.empty() )
+    {
+        cout << PART_DELIMITER;
+    }
 
     for ( const Var v : variables )
     {

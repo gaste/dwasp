@@ -54,6 +54,7 @@ public:
 	TruthValue askTruthValue( const Var variable );
 	void queryResponse( const vector< Var >& variables ) {};
 	Literal getAssertion();
+    vector< Literal > getAssertions() { return vector< Literal >(); };
 	unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory );
     void greetUser();
     void informSolving();

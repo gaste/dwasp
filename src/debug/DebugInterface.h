@@ -45,7 +45,7 @@ class Solver;
 class DebugInterface
 {    
 	public:
-        inline DebugInterface( Solver& s ) : solver( s ), coreMinimizer( s ), userInterface( new DebugUserInterfaceGUI() ) {}
+        inline DebugInterface( Solver& s, DebugUserInterface* ui ) : solver( s ), coreMinimizer( s ), userInterface( ui ) {}
         void addDebugLiteral( Literal l ) { debugLiterals.push_back( l ); consideredDebugLiterals.push_back( l ); }
         void readDebugMapping( Istream& stream );
         void debug();

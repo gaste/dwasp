@@ -19,10 +19,15 @@
 #ifndef WASPFACADE_H
 #define WASPFACADE_H
 
-#include <cassert>
-#include <vector>
-#include <unordered_map>
+#include <iostream>
+#include <string>
 #include <fstream>
+
+#include "debug/DebugUserInterfaceCLI.h"
+#include "debug/DebugUserInterfaceGUI.h"
+#include "util/ErrorMessage.h"
+#include "util/Trace.h"
+
 using namespace std;
 
 #include "util/Constants.h"
@@ -67,7 +72,7 @@ class WaspFacade
         
         inline unsigned int solveWithWeakConstraints();        
 
-        inline void enableDebug( string debugFilename );
+        inline void setDebugOptions( string debugFilename, bool useDebugGUI );
 
     private:
         Solver solver;
@@ -90,20 +95,28 @@ WaspFacade::WaspFacade() : debugInterface( NULL ), inputStream( &cin ), numberOf
 }
 
 void
-WaspFacade::enableDebug(
-    string debugFilename )
+WaspFacade::setDebugOptions(
+    string debugFilename,
+    bool useDebugGUI )
 {
-    if( debugFilename.length() != 0 )
-    {
-        inputStream = new ifstream( debugFilename );
+    // if no debug filename is specified, do not run in debug mode
+    if ( debugFilename.length() == 0 ) return;
 
-        if ( !inputStream->good() )
-            ErrorMessage::errorDuringParsing( "Could not open the debug input file '" + debugFilename + "'" );
+    inputStream = new ifstream( debugFilename );
 
-        trace_msg( debug, 1, "Using file '" << debugFilename << "' as input for the logic program." );
+    if ( !inputStream->good() )
+        ErrorMessage::errorDuringParsing( "Could not open the debug input file '" + debugFilename + "'" );
 
-        debugInterface = new DebugInterface( solver );
-    }
+    trace_msg( debug, 1, "Using file '" << debugFilename << "' as input for the logic program." );
+
+    DebugUserInterface* ui;
+
+    if ( useDebugGUI )
+        ui = new DebugUserInterfaceGUI();
+    else
+        ui = new DebugUserInterfaceCLI();
+
+    debugInterface = new DebugInterface( solver, ui );
 }
 
 unsigned int

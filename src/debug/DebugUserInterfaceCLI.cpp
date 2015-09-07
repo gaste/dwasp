@@ -32,9 +32,7 @@
 
 map< string, cmd > DebugUserInterfaceCLI::commandMap =
 {
-    { "show core", { SHOW_CORE, "Show the literals inside the UNSAT core." } },
-    { "show core ground", { SHOW_CORE_GROUND_RULES, "Show the ground rules inside the UNSAT core." } },
-    { "show core nonground", { SHOW_CORE_NONGROUND_RULES, "Show the non-ground rules inside the UNSAT core." } },
+    { "show core", { SHOW_CORE, "Show the literals, ground rules and non-ground rules inside the UNSAT core." } },
     { "show history", { SHOW_HISTORY, "Show the history of assertions." } },
     { "ask", { ASK_QUERY, "Ask me a question about the program." } },
     { "save history", { SAVE_HISTORY, "Save the assertion history in a file." } },
@@ -48,13 +46,19 @@ map< string, cmd > DebugUserInterfaceCLI::commandMap =
 UserCommand
 DebugUserInterfaceCLI::promptCommand()
 {
+    if ( forceNextCommand )
+    {
+        forceNextCommand = false;
+        return nextCommand;
+    }
+
 	string userInput = "";
 
 	do
 	{
-		promptInput(userInput);
+		promptInput( userInput );
 
-		if ( userInput == "help" )
+		if ( "help" == userInput )
 		{
 		    printHelp();
 		}
@@ -66,7 +70,9 @@ DebugUserInterfaceCLI::promptCommand()
 		{
 		    cout << "Undefined command: \"" + userInput + "\".  Try \"help\"." << endl;
 		}
-	} while(true);
+	} while ( !cin.eof() );
+
+	return UserCommand::EXIT;
 }
 
 void
@@ -87,7 +93,39 @@ DebugUserInterfaceCLI::printCore(
     const vector< Literal >& core,
     const vector< Literal >& coreAssertions )
 {
-    OutputPager::paginate( "rules = " + Formatter::formatClause( core ) + "\nassertions = " + Formatter::formatClause( coreAssertions ) );
+    bool repeat = true;
+    string userInput = "";
+
+    do {
+        cout << "Display literals (l), ground rules (g) or non-ground rules (n)?> ";
+        getline( cin, userInput );
+
+        if ( "l" == userInput )
+        {
+            printCoreLiterals( core, coreAssertions );
+            repeat = false;
+        }
+        else if ( "g" == userInput )
+        {
+            printCoreGroundRules( core, coreAssertions );
+            repeat = false;
+        }
+        else if ( "n" == userInput )
+        {
+            printCoreNonGroundRules( core, coreAssertions );
+            repeat = false;
+        }
+    } while ( repeat );
+}
+
+void
+DebugUserInterfaceCLI::printCoreLiterals(
+    const vector< Literal >& core,
+    const vector< Literal >& coreAssertions )
+{
+    OutputPager::paginate(
+            "rules = " + Formatter::formatClause( core ) +
+            "\nassertions = " + Formatter::formatClause( coreAssertions ) );
 }
 
 void
@@ -110,7 +148,7 @@ DebugUserInterfaceCLI::printCoreGroundRules(
 }
 
 void
-DebugUserInterfaceCLI::printCoreUngroundRules(
+DebugUserInterfaceCLI::printCoreNonGroundRules(
     const vector< Literal >& core,
     const vector< Literal >& coreAssertions )
 {
@@ -161,6 +199,21 @@ DebugUserInterfaceCLI::printHistory(
     OutputPager::paginate( history );
 }
 
+void
+DebugUserInterfaceCLI::queryResponse(
+    const vector< Var >& variables )
+{
+    if ( variables.empty() ) return;
+
+    TruthValue val = askTruthValue( variables[ 0 ] );
+
+    if ( UNDEFINED == val ) return;
+
+    forceNextCommand = true;
+    nextCommand = UserCommand::ASSERT_VARIABLE;
+    nextAssertion = Literal( variables[ 0 ], TRUE == val ? POSITIVE : NEGATIVE );
+}
+
 TruthValue
 DebugUserInterfaceCLI::askTruthValue(
     const Var variable )
@@ -191,37 +244,45 @@ DebugUserInterfaceCLI::askHistoryFilename()
     return filename;
 }
 
-Literal
-DebugUserInterfaceCLI::getAssertion()
+vector< Literal >
+DebugUserInterfaceCLI::getAssertions()
 {
-    bool inputCorrect = false;
+    if ( Literal::null != nextAssertion )
+    {
+        vector< Literal > assertions;
+        assertions.push_back( Literal( nextAssertion ) );
+
+        nextAssertion = Literal::null;
+
+        return assertions;
+    }
+
     string input;
-    Var assertionVariable;
+    Var assertionVariable = 0;
 
     do
     {
         cout << "Variable: ";
         getline( cin, input );
-        inputCorrect = VariableNames::getVariable( input, assertionVariable );
 
-        if ( !inputCorrect )
+        if ( !VariableNames::getVariable( input, assertionVariable ) )
         {
+            assertionVariable = 0;
             cout << "No variable named \"" << input << "\" exists" << endl;
         }
-    } while ( !inputCorrect );
-
-    inputCorrect = false;
+    } while ( 0 == assertionVariable );
 
     do
     {
         cout << "Truth value (t/f): ";
         getline( cin, input );
         transform( input.begin(), input.end(), input.begin(), ::tolower );
+    } while ( "t" != input && "f" != input );
 
-        inputCorrect = input == "t" || input == "f";
-    } while ( !inputCorrect );
+    vector< Literal > assertions;
+    assertions.push_back( Literal( assertionVariable, "t" == input ? POSITIVE : NEGATIVE ) );
 
-    return Literal( assertionVariable, input == "t" ? POSITIVE : NEGATIVE );
+    return assertions;
 }
 
 unsigned int
@@ -273,7 +334,7 @@ DebugUserInterfaceCLI::informAnalyzedDisjointCores(
 void
 DebugUserInterfaceCLI::greetUser()
 {
-    cout << "WASP debbuging mode" << endl;
+    cout << "WASP debugging mode" << endl;
 }
 
 void

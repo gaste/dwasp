@@ -64,22 +64,34 @@ class DebugInterface
         bool isUnfoundedCore( const vector< Literal > unsatCore );
         bool saveHistory( const string& filename );
         bool loadHistory( const string& filename );
-        bool isFact( const Var variable );
+        bool isVariableDeterminedAtLevelZero( const Var variable );
         bool isVariableContainedInLiterals( const Var variable, const vector< Literal >& literals );
         inline bool isDebugVariable( const Var variable ) { return isVariableContainedInLiterals( variable, debugLiterals ); }
-        inline bool isAssertion( const Var variable ) { return isVariableContainedInLiterals( variable, assertions ); }
+        inline bool isAssertion( const Var variable ) { return isVariableContainedInLiterals( variable, userAssertions ); }
         vector< vector< Literal > > computeDisjointCores();
         vector< Literal > fixCore( const vector< vector< Literal > >& cores );
 
         Solver& solver;
         QuickXPlain coreMinimizer;
         DebugUserInterface* userInterface;
-        vector< Var > facts;
+
+        /** all variables that have their truth value determined at level 0 */
+        vector< Var > determinedAtLevelZero;
+
+        /** all debug literals */
         vector< Literal > debugLiterals;
-        vector< Literal > assertionDebugLiterals;
-        vector< Literal > assumedAssertions;
+
+        /** subset of debugLiterals that are considered when using disjoint core analysis */
         vector< Literal > consideredDebugLiterals;
-        vector< Literal > assertions;
+
+        /** all assertions made by the user */
+        vector< Literal > userAssertions;
+
+        /** all literals that are assumed to be assertions */
+        vector< Literal > assumedAssertions;
+
+        /** all debug literals that belong to a constraint that is assumed to be an assertion */
+        vector< Literal > assumedAssertionDebugLiterals;
 };
 
 #endif

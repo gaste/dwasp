@@ -47,15 +47,11 @@ public:
 	~DebugUserInterfaceCLI() {};
 	UserCommand promptCommand();
 	void printCore( const vector< Literal >& core, const vector< Literal >& coreAssertions );
-	void printCoreGroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions );
-    void printCoreUngroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions );
 	void printHistory( const vector< Literal >& assertionHistory );
-	string askHistoryFilename();
-	TruthValue askTruthValue( const Var variable );
-	void queryResponse( const vector< Var >& variables ) {};
-	Literal getAssertion();
-    vector< Literal > getAssertions() { return vector< Literal >(); };
+	void queryResponse( const vector< Var >& variables );
 	unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory );
+	string askHistoryFilename();
+    vector< Literal > getAssertions();
     void greetUser();
     void informSolving();
     void informComputingQueryVariable();
@@ -70,9 +66,17 @@ public:
     void informProgramCoherent();
 
 private:
-	inline void promptInput(string& input) { cout << "WDB> "; getline(cin, input); }
+    TruthValue askTruthValue( const Var variable );
+    void printCoreLiterals ( const vector< Literal >& core, const vector< Literal >& coreAssertions );
+    void printCoreGroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions );
+    void printCoreNonGroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions );
+	inline void promptInput( string& input ) { cout << "WDB> "; getline( cin, input ); }
 	void printHelp();
+
 	static map< string, cmd > commandMap;
+	bool forceNextCommand = false;
+	UserCommand nextCommand = UserCommand::ASK_QUERY;
+	Literal nextAssertion = Literal::null;
 };
 
 #endif /* DEBUGUSERINTERFACECLI_H */

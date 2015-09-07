@@ -40,11 +40,8 @@ public:
     ~DebugUserInterfaceGUI() {};
     UserCommand promptCommand();
     void printCore( const vector< Literal >& core, const vector< Literal >& coreAssertions );
-    void printCoreGroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions ) {};
-    void printCoreUngroundRules( const vector< Literal >& core, const vector< Literal >& coreAssertions ) {};
     void printHistory( const vector< Literal >& assertionHistory ) {};
     string askHistoryFilename() { return ""; };
-    TruthValue askTruthValue( const Var variable );
     void queryResponse( const vector< Var >& variables );
     Literal getAssertion();
     vector< Literal > getAssertions();

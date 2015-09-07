@@ -74,18 +74,6 @@ DebugUserInterfaceGUI::printCore(
     cout << MESSAGE_DELIMITER;
 }
 
-TruthValue
-DebugUserInterfaceGUI::askTruthValue(
-    const Var variable )
-{
-    //cout << RESPONSE_QUERY << PART_DELIMITER << VariableNames::getName(variable) << MESSAGE_DELIMITER;
-
-    //string response;
-    //getline( cin, response, MESSAGE_DELIMITER );
-
-    return UNDEFINED;
-}
-
 void
 DebugUserInterfaceGUI::queryResponse(
     const vector< Var >& variables )

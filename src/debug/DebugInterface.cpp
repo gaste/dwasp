@@ -571,7 +571,11 @@ DebugInterface::determineQueryVariableFounded(
     trace_msg( debug, 1, "Determining query variable" );
     trace_msg( debug, 2, "Relaxing core variables and computing models" );
 
-    unsigned int numModels = determineQueryVariableFounded( unsatCore, variableEntropy, consideredDebugLiterals, 3, time( NULL ) );
+    #ifdef TRACE_ON
+    unsigned int numModels =
+    #endif
+
+    determineQueryVariableFounded( unsatCore, variableEntropy, consideredDebugLiterals, 3, time( NULL ) );
 
     trace_msg( debug, 2, "Found " << numModels << " models" );
 

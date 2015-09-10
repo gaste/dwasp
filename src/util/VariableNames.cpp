@@ -47,7 +47,7 @@ VariableNames::getName(
     return variables[ v ];
 }
 
-const bool
+bool
 VariableNames::getVariable (
 	const string& name,
 	Var& v )

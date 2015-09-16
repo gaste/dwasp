@@ -114,7 +114,7 @@ DebugInterface::debug()
 
     if ( runSolver( consideredDebugLiterals, userAssertions ) != INCOHERENT )
     {
-        userInterface->informProgramCoherent();
+        userInterface->informProgramCoherent( getAnswerSet() );
         return;
     }
 
@@ -187,7 +187,7 @@ DebugInterface::debug()
                 }
                 else
                 {
-                    userInterface->informProgramCoherent();
+                    userInterface->informProgramCoherent( getAnswerSet() );
                     continueDebugging = false;
                 }
             }
@@ -226,7 +226,7 @@ DebugInterface::debug()
             }
             else
             {
-                userInterface->informProgramCoherent();
+                userInterface->informProgramCoherent( getAnswerSet() );
                 continueDebugging = false;
             }
             break;
@@ -247,7 +247,7 @@ DebugInterface::debug()
                 }
                 else
                 {
-                    userInterface->informProgramCoherent();
+                    userInterface->informProgramCoherent( getAnswerSet() );
                     continueDebugging = false;
                 }
             }
@@ -746,4 +746,19 @@ DebugInterface::saveHistory(
 	historyFile.close();
 
     return true;
+}
+
+vector< Var >
+DebugInterface::getAnswerSet()
+{
+    vector< Var > answerSet;
+    for ( unsigned int i = 0; i < solver.numberOfAssignedLiterals(); i ++ )
+    {
+        Var v = solver.getAssignedVariable( i );
+
+        if ( solver.isTrue( v ) )
+            answerSet.push_back( v );
+    }
+
+    return answerSet;
 }

@@ -43,10 +43,9 @@ public:
     void printHistory( const vector< Literal >& assertionHistory ) {};
     string askHistoryFilename() { return ""; };
     void queryResponse( const vector< Var >& variables );
-    Literal getAssertion();
     vector< Literal > getAssertions();
     unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory ) { return 0; };
-    void greetUser() {};
+    void greetUser() { };
     void informSolving() {};
     void informComputingQueryVariable() {};
     void informSavedHistory( const string& filename ) {};
@@ -56,8 +55,7 @@ public:
     void informAnalyzedDisjointCores( const unsigned int numCores ) {};
     void informAssertionAlreadyPresent( const string& variable ) {};
     void informAssertionIsFact( const string& variable ) {};
-    void informNoQueryPossible() {};
-    void informProgramCoherent() {};
+    void informProgramCoherent( const vector< Var >& answerSet );
 
 private:
     string lastMessage;

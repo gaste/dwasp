@@ -70,6 +70,7 @@ class DebugInterface
         inline bool isAssertion( const Var variable ) { return isVariableContainedInLiterals( variable, userAssertions ); }
         vector< vector< Literal > > computeDisjointCores();
         vector< Literal > fixCore( const vector< vector< Literal > >& cores );
+        vector< Var > getAnswerSet();
 
         Solver& solver;
         QuickXPlain coreMinimizer;

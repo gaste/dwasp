@@ -203,7 +203,11 @@ void
 DebugUserInterfaceCLI::queryResponse(
     const vector< Var >& variables )
 {
-    if ( variables.empty() ) return;
+    if ( variables.empty() )
+    {
+        cout << "No more queries are possible";
+        return;
+    }
 
     TruthValue val = askTruthValue( variables[ 0 ] );
 
@@ -392,15 +396,26 @@ DebugUserInterfaceCLI::informAssertionIsFact(
 }
 
 void
-DebugUserInterfaceCLI::informNoQueryPossible()
+DebugUserInterfaceCLI::informProgramCoherent(
+    const vector< Var >& answerSet )
 {
-    cout << "No more queries are possible" << endl;
-}
 
-void
-DebugUserInterfaceCLI::informProgramCoherent()
-{
-    cout << "The program is coherent. Add" << endl
+    cout << "The program is coherent with answer set = { ";
+
+    bool first = true;
+
+    for ( const Var& v : answerSet )
+    {
+        if (!first)
+            cout << ", ";
+        else
+            first = false;
+
+        cout << VariableNames::getName( v );
+    }
+
+    cout << "}." << endl
+         << "Add" << endl
          << "    :- not atom." << endl
          << "for atoms expected to be in the answer set and" << endl
          << "    :- atom." << endl

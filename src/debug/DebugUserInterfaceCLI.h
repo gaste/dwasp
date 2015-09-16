@@ -62,8 +62,7 @@ public:
     void informAnalyzedDisjointCores( const unsigned int numCores );
     void informAssertionAlreadyPresent( const string& variable );
     void informAssertionIsFact( const string& variable );
-    void informNoQueryPossible();
-    void informProgramCoherent();
+    void informProgramCoherent( const vector< Var >& answerSet );
 
 private:
     TruthValue askTruthValue( const Var variable );

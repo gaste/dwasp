@@ -31,6 +31,7 @@
 #define REQUEST_ASSERT_LENGTH 6
 #define RESPONSE_CORE "response:core"
 #define RESPONSE_QUERY "response:query"
+#define INFO_COHERENT "info:coherent"
 
 #define ASSERT_TRUE 'y'
 #define ASSERT_FALSE 'n'
@@ -93,12 +94,6 @@ DebugUserInterfaceGUI::queryResponse(
     cout << MESSAGE_DELIMITER;
 }
 
-Literal
-DebugUserInterfaceGUI::getAssertion()
-{
-    return Literal::null;
-}
-
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
     std::string item;
@@ -146,4 +141,20 @@ DebugUserInterfaceGUI::getAssertions()
     }
 
     return userAssertions;
+}
+
+void
+DebugUserInterfaceGUI::informProgramCoherent(
+    const vector< Var >& answerSet )
+{
+    cout << INFO_COHERENT;
+
+    if ( answerSet.empty() )
+        cout << PART_DELIMITER;
+
+    for ( const Var& v : answerSet )
+        cout << PART_DELIMITER << VariableNames::getName( v );
+
+    cout << MESSAGE_DELIMITER;
+    cout.flush();
 }

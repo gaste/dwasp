@@ -21,21 +21,24 @@
 
 #include "../util/VariableNames.h"
 
+#define PART_DELIMITER        ':'
+#define MESSAGE_DELIMITER     '\n'
 
-#define PART_DELIMITER ':'
-#define MESSAGE_DELIMITER '\n'
-
-#define REQUEST_GET_CORE "get:core"
-#define REQUEST_GET_QUERY "get:query"
-#define REQUEST_ASSERT "assert"
+#define REQUEST_GET_CORE      "get:core"
+#define REQUEST_GET_QUERY     "get:query"
+#define REQUEST_ASSERT        "assert"
 #define REQUEST_ASSERT_LENGTH 6
-#define RESPONSE_CORE "response:core"
-#define RESPONSE_QUERY "response:query"
-#define INFO_COHERENT "info:coherent"
 
-#define ASSERT_TRUE 'y'
-#define ASSERT_FALSE 'n'
-#define ASSERT_UNDEFINED 'u'
+#define RESPONSE_CORE         "response:core"
+#define RESPONSE_QUERY        "response:query"
+
+#define INFO_COHERENT         "info:coherent"
+#define INFO_COMPUTING_QUERY  "info:compute:query"
+#define INFO_COMPUTING_CORE   "info:compute:core"
+
+#define ASSERT_TRUE           'y'
+#define ASSERT_FALSE          'n'
+#define ASSERT_UNDEFINED      'u'
 
 UserCommand
 DebugUserInterfaceGUI::promptCommand()
@@ -156,5 +159,19 @@ DebugUserInterfaceGUI::informProgramCoherent(
         cout << PART_DELIMITER << VariableNames::getName( v );
 
     cout << MESSAGE_DELIMITER;
+    cout.flush();
+}
+
+void
+DebugUserInterfaceGUI::informComputingCore()
+{
+    cout << INFO_COMPUTING_CORE << MESSAGE_DELIMITER;
+    cout.flush();
+}
+
+void
+DebugUserInterfaceGUI::informComputingQuery()
+{
+    cout << INFO_COMPUTING_QUERY << MESSAGE_DELIMITER;
     cout.flush();
 }

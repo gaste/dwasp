@@ -53,8 +53,8 @@ public:
 	string askHistoryFilename();
     vector< Literal > getAssertions();
     void greetUser();
-    void informSolving();
-    void informComputingQueryVariable();
+    void informComputingCore();
+    void informComputingQuery();
     void informSavedHistory( const string& filename );
     void informLoadedHistory( const string& filename );
     void informCouldNotSaveHistory( const string& filename );

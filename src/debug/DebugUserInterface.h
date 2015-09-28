@@ -59,8 +59,8 @@ public:
 	virtual vector< Literal > getAssertions() = 0;
 	virtual unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory ) = 0;
 	virtual void greetUser() = 0;
-	virtual void informSolving() = 0;
-	virtual void informComputingQueryVariable() = 0;
+	virtual void informComputingCore() = 0;
+	virtual void informComputingQuery() = 0;
 	virtual void informSavedHistory( const string& filename ) = 0;
 	virtual void informLoadedHistory( const string& filename ) = 0;
 	virtual void informCouldNotSaveHistory( const string& filename ) = 0;

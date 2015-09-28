@@ -45,9 +45,9 @@ public:
     void queryResponse( const vector< Var >& variables );
     vector< Literal > getAssertions();
     unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory ) { return 0; };
-    void greetUser() { };
-    void informSolving() {};
-    void informComputingQueryVariable() {};
+    void greetUser() {};
+    void informComputingCore();
+    void informComputingQuery();
     void informSavedHistory( const string& filename ) {};
     void informLoadedHistory( const string& filename ) {};
     void informCouldNotSaveHistory( const string& filename ) {};

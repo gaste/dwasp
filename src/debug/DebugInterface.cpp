@@ -110,7 +110,7 @@ DebugInterface::debug()
     trace_msg( debug, 1, "Start debugging with _debug assumptions" );
 
     userInterface->greetUser();
-    userInterface->informSolving();
+    userInterface->informComputingCore();
 
     if ( runSolver( consideredDebugLiterals, userAssertions ) != INCOHERENT )
     {
@@ -140,7 +140,7 @@ DebugInterface::debug()
     
     do
     {
-        switch (userInterface->promptCommand())
+        switch ( userInterface->promptCommand() )
         {
         case SHOW_CORE:
             userInterface->printCore( getCoreWithoutAssertions( minimalUnsatCore ), getCoreAssertions( minimalUnsatCore ) );
@@ -148,14 +148,13 @@ DebugInterface::debug()
         case SHOW_HISTORY:
             userInterface->printHistory( userAssertions );
             break;
-
         case ASK_QUERY:
-            userInterface->informComputingQueryVariable();
+            userInterface->informComputingQuery();
             userInterface->queryResponse( determineQueryVariable( minimalUnsatCore ) );
             break;
         case ANALYZE_DISJOINT_CORES:
         {
-            userInterface->informSolving();
+            userInterface->informComputingCore();
             vector< vector< Literal > > cores = computeDisjointCores();
             minimalUnsatCore = fixCore( cores );
             userInterface->informAnalyzedDisjointCores( cores.size() );
@@ -178,7 +177,7 @@ DebugInterface::debug()
             if ( loadHistory( filename ) )
             {
                 userInterface->informLoadedHistory( filename );
-                userInterface->informSolving();
+                userInterface->informComputingCore();
                 if ( runSolver( consideredDebugLiterals, userAssertions ) == INCOHERENT )
                 {
                     resetSolver();
@@ -216,7 +215,7 @@ DebugInterface::debug()
                 }
             }
 
-            userInterface->informSolving();
+            userInterface->informComputingCore();
 
             if ( runSolver( consideredDebugLiterals, userAssertions ) == INCOHERENT )
             {

@@ -205,7 +205,7 @@ DebugUserInterfaceCLI::queryResponse(
 {
     if ( variables.empty() )
     {
-        cout << "No more queries are possible";
+        cout << "No more queries are possible" << endl;
         return;
     }
 
@@ -342,13 +342,13 @@ DebugUserInterfaceCLI::greetUser()
 }
 
 void
-DebugUserInterfaceCLI::informSolving()
+DebugUserInterfaceCLI::informComputingCore()
 {
     cout << "Computing the unsatisfiable core" << endl;
 }
 
 void
-DebugUserInterfaceCLI::informComputingQueryVariable()
+DebugUserInterfaceCLI::informComputingQuery()
 {
     cout << "Computing the query" << endl;
 }

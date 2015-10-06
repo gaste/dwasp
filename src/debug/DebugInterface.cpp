@@ -603,7 +603,9 @@ DebugInterface::determineQueryVariableFounded(
     {
         Var variable = pair.first;
 
-        if ( !isAssertion( variable ) && !isVariableDeterminedAtLevelZero( variable ) )
+        if ( !isAssertion( variable )
+          && !isAssumedAssertion( variable )
+          && !isVariableDeterminedAtLevelZero( variable ) )
         {
             queryVariables.push_back( variable );
         }

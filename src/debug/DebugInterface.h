@@ -68,6 +68,7 @@ class DebugInterface
         bool isVariableContainedInLiterals( const Var variable, const vector< Literal >& literals );
         inline bool isDebugVariable( const Var variable ) { return isVariableContainedInLiterals( variable, debugLiterals ); }
         inline bool isAssertion( const Var variable ) { return isVariableContainedInLiterals( variable, userAssertions ); }
+        inline bool isAssumedAssertion( const Var variable ) { return isVariableContainedInLiterals( variable, assumedAssertions ); }
         vector< vector< Literal > > computeDisjointCores();
         vector< Literal > fixCore( const vector< vector< Literal > >& cores );
         vector< Var > getAnswerSet();

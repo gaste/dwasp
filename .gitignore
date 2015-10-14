@@ -26,10 +26,14 @@ gprof.*
 Thumbs.db
 Desktop.ini
 
-# Ecipse project files
+# Eclipse project files
 .project
 .cproject
 .settings/
 
 # GDB init file
 .gdbinit
+
+# Eclipse binary locations
+/Debug/
+/Release/

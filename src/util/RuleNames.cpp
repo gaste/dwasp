@@ -39,9 +39,9 @@ const string&
 RuleNames::getRule(
     const string& debugAtom )
 {
-    unsigned int parenthesisIndex = debugAtom.find( '(' );
+    std::size_t parenthesisIndex = debugAtom.find( '(' );
 
-    if (parenthesisIndex == string::npos )
+    if ( string::npos == parenthesisIndex )
     {
         return ruleMap[ debugAtom ];
     }

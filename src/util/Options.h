@@ -94,6 +94,8 @@ namespace wasp
             static void initMap();
 
             static string debug;
+
+            static bool useDebugGUI;
     };
 }
 

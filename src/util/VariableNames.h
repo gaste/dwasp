@@ -31,7 +31,7 @@ class VariableNames
 
         static bool isHidden( Var v );
         static const string& getName( Var v );
-        static const bool getVariable ( const string& name, Var& v );
+        static bool getVariable ( const string& name, Var& v );
         static void setName( Var v, string name );
         static void setToBePrinted( Var v );
         static bool hasToBePrinted( Var v );

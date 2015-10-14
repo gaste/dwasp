@@ -89,6 +89,7 @@ namespace wasp
 #define OPTIONID_bumpactivityafterpartialchecks ( 'z' + 105 )
 #define OPTIONID_backward_partialchecks ( 'z' + 106 )
 #define OPTIONID_debug ( 'z' + 107 )
+#define OPTIONID_debug_gui ( 'z' + 108 )
     
 /* WEAK CONSTRAINTS OPTIONS */
 #define OPTIONID_weakconstraintsalgorithm ( 'z' + 200 )
@@ -158,6 +159,8 @@ unsigned int Options::queryVerbosity = 0;
 
 map< string, WEAK_CONSTRAINTS_ALG > Options::stringToWeak;
 string Options::debug = "";
+
+bool Options::useDebugGUI = false;
     
 void
 Options::parse(
@@ -229,6 +232,7 @@ Options::parse(
                 { "time-limit", required_argument, NULL, OPTIONID_time_limit },
                 { "max-cost", required_argument, NULL, OPTIONID_max_cost },
                 { "debug", required_argument, NULL, OPTIONID_debug },
+                { "debug-gui", no_argument, NULL, OPTIONID_debug_gui },
                 
                 { "exchange-clauses", no_argument, NULL, OPTIONID_exchange_clauses },
                 { "forward-partialchecks", no_argument, NULL, OPTIONID_forward_partialchecks },  
@@ -490,6 +494,10 @@ Options::parse(
             	debug.append( optarg );
                 break;
                 
+            case OPTIONID_debug_gui:
+                useDebugGUI = true;
+                break;
+
             case OPTIONID_firstmodel:
                 computeFirstModel = true;
                 if( optarg )
@@ -551,7 +559,7 @@ Options::setOptions(
     waspFacade.setDisjCoresPreprocessing( disjCoresPreprocessing );
     waspFacade.setMinimizeUnsatCore( minimizeUnsatCore );
     waspFacade.setQueryAlgorithm( queryAlgorithm );
-    waspFacade.enableDebug(debug);
+    waspFacade.setDebugOptions(debug, useDebugGUI);
 }
 
 WEAK_CONSTRAINTS_ALG

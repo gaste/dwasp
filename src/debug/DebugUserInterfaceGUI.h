@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef DEBUGUSERINTERFACEPROTOCOLBUFFERS_H
-#define DEBUGUSERINTERFACEPROTOCOLBUFFERS_H
+#ifndef DEBUGUSERINTERFACEGUI_H
+#define DEBUGUSERINTERFACEGUI_H
 
 #include <iostream>
 #include <string>
@@ -44,7 +44,7 @@ public:
     string askHistoryFilename() { return ""; };
     void queryResponse( const vector< Var >& variables );
     vector< Literal > getAssertions();
-    unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory ) { return 0; };
+    unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory );
     void greetUser() {};
     void informComputingCore();
     void informComputingQuery();
@@ -61,4 +61,4 @@ private:
     string lastMessage;
 };
 
-#endif /* DEBUGUSERINTERFACEPROTOCOLBUFFERS_H */
+#endif /* DEBUGUSERINTERFACEGUI_H */

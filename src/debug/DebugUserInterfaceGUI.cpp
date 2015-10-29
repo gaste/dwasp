@@ -28,6 +28,8 @@
 #define REQUEST_GET_QUERY     "get:query"
 #define REQUEST_ASSERT        "assert"
 #define REQUEST_ASSERT_LENGTH 6
+#define REQUEST_UNDO          "undo"
+#define REQUEST_UNDO_LENGTH   4
 
 #define RESPONSE_CORE         "response:core"
 #define RESPONSE_QUERY        "response:query"
@@ -54,6 +56,7 @@ DebugUserInterfaceGUI::promptCommand()
     if ( REQUEST_GET_CORE == message ) return UserCommand::SHOW_CORE;
     if ( REQUEST_GET_QUERY == message ) return UserCommand::ASK_QUERY;
     if ( REQUEST_ASSERT == message.substr( 0, REQUEST_ASSERT_LENGTH ) ) return UserCommand::ASSERT_VARIABLE;
+    if ( REQUEST_UNDO == message.substr( 0, REQUEST_UNDO_LENGTH ) ) return UserCommand::UNDO_ASSERTION;
 
     return UserCommand::EXIT;
 }
@@ -95,6 +98,27 @@ DebugUserInterfaceGUI::queryResponse(
     }
 
     cout << MESSAGE_DELIMITER;
+}
+
+unsigned int
+DebugUserInterfaceGUI::chooseAssertionToUndo(
+    const vector< Literal >& assertionHistory )
+{
+    if ( REQUEST_UNDO == lastMessage.substr( 0, REQUEST_UNDO_LENGTH ) )
+    {
+        string atomToUndo = lastMessage.substr( REQUEST_UNDO_LENGTH + 1 );
+
+        for ( unsigned int i = 0; i < assertionHistory.size(); i ++ )
+        {
+            if ( atomToUndo == VariableNames::getName( assertionHistory[ i ].getVariable() ) )
+            {
+                return i;
+            }
+        }
+    }
+
+    // no assertion to undo found
+    return assertionHistory.size();
 }
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {

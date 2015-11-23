@@ -52,9 +52,12 @@ public:
 	unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory );
 	string askHistoryFilename();
     vector< Literal > getAssertions();
+    TruthValue askUnfoundedTruthValue( const Var& variable ) { return askTruthValue( variable ); }
     void greetUser();
     void informComputingCore();
     void informComputingQuery();
+    void informUnfoundedCase();
+    void informPossiblySupportingRule( const Literal& unfoundedAssertion, const string& supportingRule );
     void informSavedHistory( const string& filename );
     void informLoadedHistory( const string& filename );
     void informCouldNotSaveHistory( const string& filename );

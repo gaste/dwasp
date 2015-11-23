@@ -187,6 +187,28 @@ DebugUserInterfaceGUI::informProgramCoherent(
 }
 
 void
+DebugUserInterfaceGUI::informUnfoundedCase()
+{
+    // TODO: implement protocol
+}
+
+void
+DebugUserInterfaceGUI::informPossiblySupportingRule(
+    const Literal& unfoundedAssertion,
+    const string& supportingRule )
+{
+    // TODO: implement protocol
+}
+
+TruthValue
+DebugUserInterfaceGUI::askUnfoundedTruthValue(
+    const Var& variable )
+{
+    // TODO: implement protocol
+    return TRUE;
+}
+
+void
 DebugUserInterfaceGUI::informComputingCore()
 {
     cout << INFO_COMPUTING_CORE << MESSAGE_DELIMITER;

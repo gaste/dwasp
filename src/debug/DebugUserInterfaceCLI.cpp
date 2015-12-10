@@ -333,7 +333,7 @@ DebugUserInterfaceCLI::informPossiblySupportingRule(
     const string& supportingRule )
 {
     cout << "Possibly supporting rule for atom '" << Formatter::formatLiteral( unfoundedAssertion ) << "':" << endl
-         << "  " << supportingRule << endl;
+         << "  " << RuleNames::getGroundRule( supportingRule ) << endl;
 }
 
 void

@@ -35,6 +35,7 @@
 #define RESPONSE_QUERY        "response:query"
 
 #define INFO_COHERENT         "info:coherent"
+#define INFO_UNFOUNDED        "info:unfounded"
 #define INFO_COMPUTING_QUERY  "info:compute:query"
 #define INFO_COMPUTING_CORE   "info:compute:core"
 
@@ -189,7 +190,8 @@ DebugUserInterfaceGUI::informProgramCoherent(
 void
 DebugUserInterfaceGUI::informUnfoundedCase()
 {
-    // TODO: implement protocol
+    cout << INFO_UNFOUNDED << MESSAGE_DELIMITER;
+    cout.flush();
 }
 
 void
@@ -197,15 +199,35 @@ DebugUserInterfaceGUI::informPossiblySupportingRule(
     const Literal& unfoundedAssertion,
     const string& supportingRule )
 {
-    // TODO: implement protocol
+    Var debugAtomVariable;
+
+    VariableNames::getVariable( supportingRule, debugAtomVariable );
+
+    printCore( { Literal( debugAtomVariable ) }, { } );
 }
 
 TruthValue
 DebugUserInterfaceGUI::askUnfoundedTruthValue(
     const Var& variable )
 {
-    // TODO: implement protocol
-    return TRUE;
+    queryResponse( { variable } );
+
+    UserCommand cmd = promptCommand();
+
+    if ( UserCommand::ASSERT_VARIABLE == cmd )
+    {
+        vector< Literal > assertions = getAssertions();
+
+        for ( const Literal& assertion : assertions )
+        {
+            if ( assertion.getVariable() == variable )
+            {
+                return ( assertion.getSign() == POSITIVE ) ? TRUE : FALSE;
+            }
+        }
+    }
+
+    return -1;
 }
 
 void

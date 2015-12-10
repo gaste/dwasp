@@ -439,7 +439,7 @@ DebugInterface::determineQueryVariableUnfounded(
         trace_msg( debug, 2, "Unfounded assertion '" << Formatter::formatLiteral( unfoundedAssertion ) << "'" );
         trace_msg( debug, 3, "Determining possibly supporting rules" );
 
-        vector< pair< string, vector< Literal > > > supportingRules = RuleNames::getSupportingRules( unfoundedAssertion );
+        map< string, vector< Literal > > supportingRules = RuleNames::getSupportingRules( unfoundedAssertion );
 
         trace_msg( debug, 3, "Found " << supportingRules.size() << " supporting rule(s)" );
 
@@ -483,52 +483,6 @@ DebugInterface::determineQueryVariableUnfounded(
     }
 
     return vector< Var >();
-
-    // OLD Algorithm
-
-//    Var queryVariable = 0;
-//    map< Var, unsigned int > variableOccurences;
-//
-//    trace_msg( debug, 1, "Determining query variables - unfounded case" );
-//
-//    for ( const Literal& coreLiteral : unsatCore )
-//    {
-//        Var unfoundedVariable = coreLiteral.getVariable();
-//
-//        if ( isVariableContainedInLiterals( unfoundedVariable, assertionDebugLiterals ) )
-//        {
-//            unfoundedVariable = RuleNames::getVariables( coreLiteral )[ 0 ];
-//        }
-//
-//        trace_msg( debug, 2, "Get rule variables for variable '" << VariableNames::getName( unfoundedVariable ) << "'" );
-//        for ( const Var bodyVariable : RuleNames::getVariablesOfSupportingRules( unfoundedVariable ) )
-//        {
-//            trace_msg( debug, 3, "Variable: " << VariableNames::getName( bodyVariable ) );
-//            variableOccurences[ bodyVariable ] ++;
-//        }
-//    }
-//
-//    // return most occuring variable
-//    unsigned int maxOccurence = 0;
-//
-//    trace_msg( debug, 2, "Iterating over all query variable candidates" );
-//    for ( const auto& pair : variableOccurences )
-//    {
-//        Var currentVariable = pair.first;
-//        unsigned int numOccurances = pair.second;
-//
-//        trace_msg( debug, 3, "Variable '" << VariableNames::getName( currentVariable ) << "' occurs " << numOccurances << " times");
-//
-//        if ( numOccurances > maxOccurence
-//             && !isAssertion( currentVariable )
-//             && !isFact( currentVariable ))
-//        {
-//            maxOccurence = numOccurances;
-//            queryVariable = currentVariable;
-//        }
-//    }
-//
-//    return queryVariable;
 }
 
 class VariableComparator {

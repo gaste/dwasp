@@ -363,11 +363,11 @@ RuleNames::getVariablesOfSupportingRules(
     return variables;
 }
 
-vector< pair< string, vector< Literal > > >
+map< string, vector< Literal > >
 RuleNames::getSupportingRules(
     const string& atom )
 {
-    vector< pair< string, vector< Literal > > > supportingRules;
+    map< string, vector< Literal > > supportingRules;
 
     Var atomVariable = 0;
     VariableNames::getVariable( atom, atomVariable );
@@ -545,7 +545,7 @@ RuleNames::getSupportingRules(
                     }
 
                     // construct the pair
-                    supportingRules.push_back( make_pair( getGroundRule( variableName ), literals ) );
+                    supportingRules[ variableName ] = literals;
                 }
             }
         }

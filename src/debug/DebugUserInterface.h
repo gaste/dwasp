@@ -58,9 +58,12 @@ public:
 	virtual string askHistoryFilename() = 0;
 	virtual vector< Literal > getAssertions() = 0;
 	virtual unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory ) = 0;
+	virtual TruthValue askUnfoundedTruthValue( const Var& variable ) = 0;
 	virtual void greetUser() = 0;
 	virtual void informComputingCore() = 0;
 	virtual void informComputingQuery() = 0;
+	virtual void informUnfoundedCase() = 0;
+	virtual void informPossiblySupportingRule( const Literal& unfoundedAssertion, const string& supportingRule ) = 0;
 	virtual void informSavedHistory( const string& filename ) = 0;
 	virtual void informLoadedHistory( const string& filename ) = 0;
 	virtual void informCouldNotSaveHistory( const string& filename ) = 0;

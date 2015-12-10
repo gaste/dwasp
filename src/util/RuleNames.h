@@ -53,9 +53,9 @@ class RuleNames
         static vector< Var > getVariablesOfSupportingRules( const Literal& headLiteral ) { return getVariablesOfSupportingRules( headLiteral.getVariable() ); }
         static vector< Var > getVariablesOfSupportingRules( const Var headVariable ) { return getVariablesOfSupportingRules( VariableNames::getName( headVariable ) ); }
         static vector< Var > getVariablesOfSupportingRules( const string& headAtom );
-        static vector< pair< string, vector< Literal > > > getSupportingRules( const Literal& headLiteral ) { return getSupportingRules( headLiteral.getVariable() ); }
-        static vector< pair< string, vector< Literal > > > getSupportingRules( const Var headVariable ) { return getSupportingRules( VariableNames::getName( headVariable ) ); }
-        static vector< pair< string, vector< Literal > > > getSupportingRules( const string& headAtom );
+        static map< string, vector< Literal > > getSupportingRules( const Literal& headLiteral ) { return getSupportingRules( headLiteral.getVariable() ); }
+        static map< string, vector< Literal > > getSupportingRules( const Var headVariable ) { return getSupportingRules( VariableNames::getName( headVariable ) ); }
+        static map< string, vector< Literal > > getSupportingRules( const string& headAtom );
 
     private:
         static vector< string > getTerms( const string& term );

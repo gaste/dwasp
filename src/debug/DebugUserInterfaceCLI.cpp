@@ -320,6 +320,22 @@ DebugUserInterfaceCLI::chooseAssertionToUndo(
     return assertion;
 }
 
+
+void
+DebugUserInterfaceCLI::informUnfoundedCase()
+{
+    cout << "The core is an unfounded set" << endl;
+}
+
+void
+DebugUserInterfaceCLI::informPossiblySupportingRule(
+    const Literal& unfoundedAssertion,
+    const string& supportingRule )
+{
+    cout << "Possibly supporting rule for atom '" << Formatter::formatLiteral( unfoundedAssertion ) << "':" << endl
+         << "  " << RuleNames::getGroundRule( supportingRule ) << endl;
+}
+
 void
 DebugUserInterfaceCLI::informAnalyzedDisjointCores(
     const unsigned int numCores )

@@ -414,128 +414,75 @@ DebugInterface::determineQueryVariable(
     const vector< Literal >& unsatCore )
 {
     if ( isUnfoundedCore( unsatCore ) )
-        //return determineQueryVariableUnfounded( unsatCore );
-        return vector< Var >();
+        return determineQueryVariableUnfounded( unsatCore );
     else
         return determineQueryVariableFounded( unsatCore );
 }
 
-Var
+vector< Var >
 DebugInterface::determineQueryVariableUnfounded(
     const vector< Literal >& unsatCore )
 {
-    return 0;
+    userInterface->informUnfoundedCase();
 
-    //TODO refactor
-//    cout << "The core is an unfounded set" << endl;
-//
-//    vector< Literal > unfoundedAssertions = getCoreAssertions( unsatCore );
-//    vector< Literal > visitedAssertions ( unfoundedAssertions );
-//
-//    trace_msg( debug, 1, "Determining query variables - unfounded assertions = " << Formatter::formatClause( unfoundedAssertions ) );
-//
-//    while ( !unfoundedAssertions.empty() )
-//    {
-//        Literal unfoundedAssertion = unfoundedAssertions.front();
-//        unfoundedAssertions.erase( unfoundedAssertions.begin() );
-//
-//        trace_msg( debug, 2, "Unfounded assertion '" << Formatter::formatLiteral( unfoundedAssertion ) << "'" );
-//        trace_msg( debug, 3, "Computing supporting rules" );
-//
-//        vector< pair< string, vector< Literal > > > supportingRules = RuleNames::getSupportingRules( unfoundedAssertion );
-//
-//        trace_msg( debug, 3, "Found " << supportingRules.size() << " supporting rule(s)" );
-//
-//        // iterate over each supporting rule and add the unfulfilled body literals to the queue
-//        for ( pair< string, vector< Literal > > pair : supportingRules )
-//        {
-//            string supportingRule = pair.first;
-//            vector< Literal > supportingRuleLiterals = pair.second;
-//            vector< Literal > unsatisfiedLiterals;
-//
-//            trace_msg( debug, 4, "Rule '" << supportingRule << "' with literals " << Formatter::formatClause( supportingRuleLiterals ) );
-//
-//            for ( const Literal& literal : supportingRuleLiterals )
-//            {
-//                trace_msg( debug, 5, "Literal '" << Formatter::formatLiteral( literal ) << "': isAssertion = " << isAssertion( literal.getVariable() ) << "; isAssumedAssertion = " << isVariableContainedInLiterals( literal.getVariable(), assumedAssertions ) << "; already visited = " << !isVariableContainedInLiterals( literal.getVariable(), visitedAssertions ));
-//                if ( !isAssertion( literal.getVariable() )
-//                  && !isVariableContainedInLiterals( literal.getVariable(), assumedAssertions )
-//                  && !isVariableContainedInLiterals( literal.getVariable(), visitedAssertions ))
-//                {
-//                    unsatisfiedLiterals.push_back( literal );
-//                }
-//            }
-//
-//            trace_msg( debug, 5, "Unsatisfied literals: " << Formatter::formatClause( unsatisfiedLiterals ) );
-//
-//            cout << "Possibly supporting rule for atom '" << Formatter::formatLiteral( unfoundedAssertion ) << "':" << endl << "  " << supportingRule << endl;
-//
-//            if ( !unsatisfiedLiterals.empty() )
-//            {
-//                for ( const Literal& unsatL : unsatisfiedLiterals )
-//                {
-//                    TruthValue val = userInterface->askTruthValue( unsatL.getVariable() );
-//                    TruthValue satisfyingVal = unsatL.isPositive() ? TRUE : FALSE;
-//                    if ( val == satisfyingVal && !isVariableContainedInLiterals( unsatL.getVariable(), visitedAssertions ) )
-//                    {
-//                        trace_msg( debug, 5, "Adding '" << Formatter::formatLiteral( unsatL ) << "' to the queue." );
-//                        unfoundedAssertions.push_back( unsatL );
-//                        visitedAssertions.push_back( unsatL );
-//                    }
-//                }
-//
-//            }
-//
-//        }
-//    }
-//
-//    return 0;
+    vector< Literal > unfoundedAssertions = getCoreAssertions( unsatCore );
+    vector< Literal > visitedAssertions;
 
-    // OLD Algorithm
+    trace_msg( debug, 1, "Determining query variables - unfounded assertion = " << Formatter::formatClause( unfoundedAssertions ) );
 
-//    Var queryVariable = 0;
-//    map< Var, unsigned int > variableOccurences;
-//
-//    trace_msg( debug, 1, "Determining query variables - unfounded case" );
-//
-//    for ( const Literal& coreLiteral : unsatCore )
-//    {
-//        Var unfoundedVariable = coreLiteral.getVariable();
-//
-//        if ( isVariableContainedInLiterals( unfoundedVariable, assertionDebugLiterals ) )
-//        {
-//            unfoundedVariable = RuleNames::getVariables( coreLiteral )[ 0 ];
-//        }
-//
-//        trace_msg( debug, 2, "Get rule variables for variable '" << VariableNames::getName( unfoundedVariable ) << "'" );
-//        for ( const Var bodyVariable : RuleNames::getVariablesOfSupportingRules( unfoundedVariable ) )
-//        {
-//            trace_msg( debug, 3, "Variable: " << VariableNames::getName( bodyVariable ) );
-//            variableOccurences[ bodyVariable ] ++;
-//        }
-//    }
-//
-//    // return most occuring variable
-//    unsigned int maxOccurence = 0;
-//
-//    trace_msg( debug, 2, "Iterating over all query variable candidates" );
-//    for ( const auto& pair : variableOccurences )
-//    {
-//        Var currentVariable = pair.first;
-//        unsigned int numOccurances = pair.second;
-//
-//        trace_msg( debug, 3, "Variable '" << VariableNames::getName( currentVariable ) << "' occurs " << numOccurances << " times");
-//
-//        if ( numOccurances > maxOccurence
-//             && !isAssertion( currentVariable )
-//             && !isFact( currentVariable ))
-//        {
-//            maxOccurence = numOccurances;
-//            queryVariable = currentVariable;
-//        }
-//    }
-//
-//    return queryVariable;
+    while ( !unfoundedAssertions.empty() )
+    {
+        // get the next unfounded assertion (FIFO)
+        Literal unfoundedAssertion = unfoundedAssertions.front();
+        unfoundedAssertions.erase( unfoundedAssertions.begin() );
+
+        trace_msg( debug, 2, "Unfounded assertion '" << Formatter::formatLiteral( unfoundedAssertion ) << "'" );
+        trace_msg( debug, 3, "Determining possibly supporting rules" );
+
+        map< string, vector< Literal > > supportingRules = RuleNames::getSupportingRules( unfoundedAssertion );
+
+        trace_msg( debug, 3, "Found " << supportingRules.size() << " supporting rule(s)" );
+
+        // iterate over each supporting rule and add the unfulfilled body literals to the queue
+        for ( pair< string, vector< Literal > > pair : supportingRules )
+        {
+            string supportingRule = pair.first;
+            vector< Literal > supportingRuleLiterals = pair.second;
+            vector< Literal > unsatisfiedLiterals;
+
+            trace_msg( debug, 4, "Rule '" << supportingRule << "' with literals " << Formatter::formatClause( supportingRuleLiterals ) );
+
+            for ( const Literal& literal : supportingRuleLiterals )
+            {
+                trace_msg( debug, 5, "Literal '" << Formatter::formatLiteral( literal ) << "': isAssertion = " << isAssertion( literal.getVariable() ) << "; isAssumedAssertion = " << isVariableContainedInLiterals( literal.getVariable(), assumedAssertions ) << "; already visited = " << !isVariableContainedInLiterals( literal.getVariable(), visitedAssertions ));
+                if ( !isAssertion( literal.getVariable() )
+                  && !isVariableContainedInLiterals( literal.getVariable(), assumedAssertions )
+                  && !isVariableContainedInLiterals( literal.getVariable(), visitedAssertions ))
+                {
+                    unsatisfiedLiterals.push_back( literal );
+                }
+            }
+
+            trace_msg( debug, 5, "Unsatisfied literals: " << Formatter::formatClause( unsatisfiedLiterals ) );
+
+            userInterface->informPossiblySupportingRule( unfoundedAssertion, supportingRule );
+
+            for ( const Literal& unsatLiteral : unsatisfiedLiterals )
+            {
+                TruthValue satisfyingVal = unsatLiteral.isPositive() ? TRUE : FALSE;
+                TruthValue userVal = userInterface->askUnfoundedTruthValue( unsatLiteral.getVariable() );
+
+                if ( userVal == satisfyingVal && !isVariableContainedInLiterals( unsatLiteral.getVariable(), visitedAssertions ) )
+                {
+                    trace_msg( debug, 5, "Adding '" << Formatter::formatLiteral( unsatLiteral ) << "' to the queue." );
+                    unfoundedAssertions.push_back( unsatLiteral );
+                    visitedAssertions.push_back( unsatLiteral );
+                }
+            }
+        }
+    }
+
+    return vector< Var >();
 }
 
 class VariableComparator {

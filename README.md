@@ -1,6 +1,10 @@
 # DWASP
 A modified version of the ASP solver [WASP](https://github.com/alviano/wasp) that enables debugging of ASP programs. DWASP takes an faulty logic program together with an test case as input, and asks the user questions about an expected answer set of the program. It then points the user to a set of faulty rules.
 
+<p align="center">
+<a href="https://github.com/gaste/dwasp/releases/latest"><img src="https://img.shields.io/github/release/gaste/dwasp.svg" alt="Latest Version"></img></a>
+</p>
+
 ## Table of contents
  - [Building](#building)
  - [Usage](#usage)

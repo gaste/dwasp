@@ -53,7 +53,7 @@ class DebugInterface
     private:
         DebugInterface( const DebugInterface& );
         vector< Var > determineQueryVariable( const vector< Literal >& unsatCore );
-        Var determineQueryVariableUnfounded( const vector< Literal >& unsatCore );
+        vector< Var > determineQueryVariableUnfounded( const vector< Literal >& unsatCore );
         vector< Var > determineQueryVariableFounded( const vector< Literal >& unsatCore );
         unsigned int determineQueryVariableFounded( const vector< Literal >& unsatCore, map< Var, int >& variableEntropy, const vector< Literal >& relaxedLiterals, unsigned int level, const time_t& startTime );
         vector< Literal > getCoreWithoutAssertions( const vector< Literal >& unsatCore );

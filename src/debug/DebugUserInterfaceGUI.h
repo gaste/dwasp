@@ -45,9 +45,12 @@ public:
     void queryResponse( const vector< Var >& variables );
     vector< Literal > getAssertions();
     unsigned int chooseAssertionToUndo( const vector< Literal >& assertionHistory );
+    TruthValue askUnfoundedTruthValue( const Var& variable );
     void greetUser() {};
     void informComputingCore();
     void informComputingQuery();
+    void informUnfoundedCase();
+    void informPossiblySupportingRule( const Literal& unfoundedAssertion, const string& supportingRule );
     void informSavedHistory( const string& filename ) {};
     void informLoadedHistory( const string& filename ) {};
     void informCouldNotSaveHistory( const string& filename ) {};
